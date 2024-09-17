@@ -2,6 +2,68 @@ import { useState, useEffect } from "react";
 import ClockFace from "./components/clockFace";
 import { parseXMLtoObject } from "./utils/dataParser";
 
+const WeatherWidget = () => {
+  const [weatherData, setWeatherData] = useState(null);
+  const [error, setError] = useState(null);
+  const [weatherIcon, setWeatherIcon] = useState(null);
+
+  useEffect(() => {
+    const getWeather = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
+
+            try {
+              const response = await fetch(url);
+              if (!response.ok) {
+                throw new Error("Weather data fetch failed");
+              }
+              const data = await response.json();
+              setWeatherData(data);
+            } catch (err) {
+              setError(err.message);
+            }
+          },
+          (err) => {
+            setError(err.message);
+          }
+        );
+      } else {
+        setError("Geolocation is not supported by this browser.");
+      }
+    };
+
+    getWeather();
+  }, []);
+
+  useEffect(() => {
+    if (weatherData && weatherData.weather && weatherData.weather.length > 0) {
+      const icon = weatherData.weather[0].icon;
+      setWeatherIcon(`https://openweathermap.org/img/wn/${icon}@2x.png`);
+    }
+  }, [weatherData]);
+
+  return (
+    <div className="header-item left">
+      {error && error.code !== 1 && <p>Error: {error.message}</p>}
+      {/* Error code 1 is usually PERMISSION_DENIED */}
+      {!error && !weatherData && <p>Ladataan säätietoja...</p>}
+      {weatherData && (
+        <div>
+          <div className="weatherContent">
+            <p className="weatherArea">{weatherData.name}</p>
+            <p className="weatherTemp">{weatherData.main.temp}°C</p>
+            <img className="weatherIcon" src={weatherIcon} alt="Weather Icon" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const App = () => {
   const [data, setData] = useState([]);
   const [dates, setDates] = useState([]);
@@ -41,9 +103,6 @@ const App = () => {
     const startDate = formatTime(startOfDay);
     const twelveHoursLater = new Date(dateNow.getTime() + 1 * 60 * 60 * 1000);
     const hour12Ahead = formatTime(twelveHoursLater);
-
-    console.log("startDate", startDate); //
-    console.log("hour12Ahead", hour12Ahead); //
     return [startDate, hour12Ahead];
   };
 
@@ -74,10 +133,17 @@ const App = () => {
 
   return (
     <div className="container">
-      <h1>Power React App</h1>
+      <div className="header">
+        <WeatherWidget />
+        <div className="header-item mid">
+          <h1>Sähkö tänään</h1>
+        </div>
+        <div className="header-item right"> </div>
+      </div>
       <ClockFace data={data} />
-      <a href="https://cors-anywhere.herokuapp.com/">CORS link</a>
-      <div className="prices">
+
+      <div className="footer">© Markus Lemiläinen 2024</div>
+      {/* <div className="prices">
         {data.map((pair, index) => (
           <div key={index}>
             <p>
@@ -85,7 +151,7 @@ const App = () => {
             </p>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };
