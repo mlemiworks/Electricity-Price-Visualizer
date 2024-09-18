@@ -31,7 +31,7 @@ const fetchData = async () => {
 // Fetch every hour, might change later
 cron.schedule("0 * * * *", fetchData);
 
-app.get("/", async (req, res) => {
+app.get("/api", async (req, res) => {
   const cachedData = dataCache.get("priceData");
 
   if (cachedData) {
