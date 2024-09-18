@@ -8,7 +8,7 @@ const { formatDatesForApi } = require("./utils/dateFormatter");
 const { parseXMLtoObject } = require("./utils/dataParser");
 
 const app = express();
-const notesRouter = express.Router();
+app.use("/api/notes");
 
 app.use(cors());
 app.use(express.static("dist"));
@@ -31,7 +31,7 @@ const fetchData = async () => {
 // Fetch every hour, might change later
 cron.schedule("0 * * * *", fetchData);
 
-app.get("/api", async (req, res) => {
+app.get("/", async (req, res) => {
   const cachedData = dataCache.get("priceData");
 
   if (cachedData) {
