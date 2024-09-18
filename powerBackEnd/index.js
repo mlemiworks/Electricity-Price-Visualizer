@@ -8,7 +8,6 @@ const { formatDatesForApi } = require("./utils/dateFormatter");
 const { parseXMLtoObject } = require("./utils/dataParser");
 
 const app = express();
-app.use("/api/notes");
 
 app.use(cors());
 app.use(express.static("dist"));
