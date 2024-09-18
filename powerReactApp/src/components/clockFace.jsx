@@ -16,18 +16,18 @@ import { useEffect, useState } from "react";
 // ];
 
 const colorScale = [
-  "rgba(40, 167, 69, 1)", // Bright Green
-  "rgba(133, 224, 133, 0.9)", // Lime Green
-  "rgba(195, 230, 203, 0.9)", // Light Green
-  "rgba(255, 235, 153, 0.9)", // Pale Yellow
-  "rgba(240, 230, 140, 0.9)", // Beige
-  "rgba(211, 211, 211, 0.9)", // Light Gray
-  "rgba(244, 204, 204, 0.9)", // Light Pink
-  "rgba(255, 179, 71, 0.9)", // Orange
-  "rgba(255, 193, 7, 0.9)", // Amber
-  "rgba(255, 112, 67, 0.9)", // Coral Red
-  "rgba(220, 53, 69, 0.9)", // Red
-  "rgba(169, 50, 38, 0.9)", // Dark Red
+  "rgba(30, 127, 53, 1)", // Dark Green
+  "rgba(100, 168, 100, 0.9)", // Dark Lime Green
+  "rgba(145, 170, 145, 0.9)", // Muted Light Green
+  "rgba(190, 175, 115, 0.9)", // Dark Pale Yellow
+  "rgba(180, 170, 110, 0.9)", // Dark Beige
+  "rgba(150, 150, 150, 0.9)", // Dark Light Gray
+  "rgba(180, 140, 140, 0.9)", // Dark Light Pink
+  "rgba(200, 135, 50, 0.9)", // Dark Orange
+  "rgba(200, 150, 5, 0.9)", // Dark Amber
+  "rgba(190, 80, 50, 0.9)", // Dark Coral Red
+  "rgba(170, 40, 50, 0.9)", // Dark Red
+  "rgba(120, 35, 30, 0.9)", // Deep Dark Red
 ];
 
 const ClockFace = ({ data }) => {
@@ -110,7 +110,7 @@ const ClockFace = ({ data }) => {
 
     clocks.forEach((clock) => {
       const radius = clock.offsetWidth / 2;
-      const numberRadius = radius + 13; // Radius of the circle where the numbers will be placed.
+      const numberRadius = radius + 16; // Radius of the circle where the numbers will be placed.
 
       if (indexCounter !== 0) {
         // Twelve numbers around the clock
@@ -160,6 +160,7 @@ const ClockFace = ({ data }) => {
 
   return (
     <div className="clockContainer">
+      <span className="key">snt/kWh</span>
       <div className="clockBox-1">
         <div className="clockDigits"></div>
         <div className="clock">

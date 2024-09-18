@@ -1,5 +1,8 @@
+const { DOMParser } = require("xmldom"); // Importing DOMParser from xmldom
+
+// Function to parse XML to Object
 const parseXMLtoObject = (text) => {
-  // Parse the XML
+  // Parse the XML using xmldom
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(text, "text/xml");
 
@@ -15,7 +18,7 @@ const parseXMLtoObject = (text) => {
     prices: [],
   };
 
-  // Multiply each value by 1.24
+  // Multiply each value by 1.255 and push it into prices array
   for (let i = 0; i < points.length; i++) {
     const price = parseFloat(
       points[i].getElementsByTagName("price.amount")[0].textContent
@@ -24,13 +27,13 @@ const parseXMLtoObject = (text) => {
     result.prices.push(priceWithTax);
   }
 
+  // Call function to pair prices with dates
   const finalData = pairPricesWithDate(result);
-
-  console.log(finalData);
 
   return finalData;
 };
 
+// Function to pair prices with dates
 const pairPricesWithDate = (data) => {
   const baseDate = new Date(data.date);
 
@@ -38,15 +41,17 @@ const pairPricesWithDate = (data) => {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0); // Set time to 00:00
 
+  // Pair prices with time slots (hours)
   const pairedData = data.prices
     .map((price, index) => {
-      const date = new Date(baseDate.getTime() + index * 60 * 60 * 1000);
+      const date = new Date(baseDate.getTime() + index * 60 * 60 * 1000); // Add hours
       return { date, price };
     })
-    .filter((pair) => pair.date >= startOfToday);
+    .filter((pair) => pair.date >= startOfToday); // Filter pairs from today onwards
 
-  console.log("pairedData", pairedData);
   return pairedData;
 };
 
-export { parseXMLtoObject };
+module.exports = {
+  parseXMLtoObject,
+};
