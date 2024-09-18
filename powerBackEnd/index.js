@@ -12,7 +12,6 @@ const notesRouter = express.Router();
 
 app.use(cors());
 app.use(express.static("dist"));
-app.use("/api", notesRouter);
 
 const dataCache = new NodeCache({ stdTTL: 3600 }); // 60 minutes cache
 
@@ -32,7 +31,7 @@ const fetchData = async () => {
 // Fetch every hour, might change later
 cron.schedule("0 * * * *", fetchData);
 
-notesRouter.get("/", async (req, res) => {
+app.get("/api", async (req, res) => {
   const cachedData = dataCache.get("priceData");
 
   if (cachedData) {
