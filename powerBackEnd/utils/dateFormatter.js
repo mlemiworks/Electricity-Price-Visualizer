@@ -32,7 +32,10 @@ const formatDatesForApi = async () => {
     .toDate(); // Convert to native Date object
 
   // Format the start of the day
-  const startDate = await formatTime(startOfDay);
+  const startOfDay24HoursEarlier = moment(startOfDay)
+    .subtract(1, "days")
+    .toDate();
+  const startDate = await formatTime(startOfDay24HoursEarlier);
 
   // 12 hours later from the start of the day
   const twelveHoursLater = new Date(startOfDay.getTime() + 12 * 60 * 60 * 1000); // Add 12 hours in milliseconds
