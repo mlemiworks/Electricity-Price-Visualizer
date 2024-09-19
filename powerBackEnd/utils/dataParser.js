@@ -1,4 +1,8 @@
 const { DOMParser } = require("xmldom"); // Importing DOMParser from xmldom
+const moment = require("moment-timezone"); // Importing moment-timezone
+
+// Timezone for Helsinki
+const timeZone = "Europe/Helsinki";
 
 // Function to parse XML to Object
 const parseXMLtoObject = (text) => {
@@ -18,7 +22,7 @@ const parseXMLtoObject = (text) => {
     prices: [],
   };
 
-  // Multiply each value by 1.255 and push it into prices array
+  // Multiply each value by 1.255, which is the VAT in Finland
   for (let i = 0; i < points.length; i++) {
     const price = parseFloat(
       points[i].getElementsByTagName("price.amount")[0].textContent
@@ -35,19 +39,20 @@ const parseXMLtoObject = (text) => {
 
 // Function to pair prices with dates
 const pairPricesWithDate = (data) => {
-  const baseDate = new Date(data.date);
+  // Parse the base date in Helsinki timezone
+  const baseDate = moment.tz(data.date, timeZone);
 
-  // Get the start of today's date at 00:00
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0); // Set time to 00:00
+  // Get the start of today's date at 00:00 in Helsinki time
+  const startOfToday = moment.tz(timeZone).startOf("day");
 
   // Pair prices with time slots (hours)
   const pairedData = data.prices
     .map((price, index) => {
-      const date = new Date(baseDate.getTime() + index * 60 * 60 * 1000); // Add hours
-      return { date, price };
+      // Add hours to the base date
+      const date = baseDate.clone().add(index, "hours");
+      return { date: date.toDate(), price }; // Convert to native Date object
     })
-    .filter((pair) => pair.date >= startOfToday); // Filter pairs from today onwards
+    .filter((pair) => pair.date >= startOfToday.toDate()); // Filter pairs from today onwards
 
   return pairedData;
 };
