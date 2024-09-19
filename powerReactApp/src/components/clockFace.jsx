@@ -43,11 +43,14 @@ const ClockFace = ({ data }) => {
       sectorElements.push(<div key={i} className="sector"></div>);
     }
     setSectors(sectorElements);
+    generateTimeDigits();
   }, []);
 
   useEffect(() => {
-    assignColorToPrice();
-    generateTimeDigits();
+    if (data.length > 0) {
+      // Check if data is not empty
+      assignColorToPrice();
+    }
   }, [data]);
 
   const assignColorToPrice = () => {

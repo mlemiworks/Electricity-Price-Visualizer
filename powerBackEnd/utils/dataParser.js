@@ -9,7 +9,6 @@ const parseXMLtoObject = (text) => {
   // Parse the XML using xmldom
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(text, "text/xml");
-
   // Extract the start date
   const startDate = xmlDoc.getElementsByTagName("start")[0].textContent;
 
@@ -44,6 +43,7 @@ const pairPricesWithDate = (data) => {
 
   // Get the start of today's date at 00:00 in Helsinki time
   const startOfToday = moment.tz(timeZone).startOf("day");
+  console.log(startOfToday);
 
   // Pair prices with time slots (hours)
   const pairedData = data.prices
