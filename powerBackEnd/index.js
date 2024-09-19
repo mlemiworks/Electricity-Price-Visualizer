@@ -27,6 +27,8 @@ const fetchData = async () => {
   dataCache.set("priceData", parsedData);
 };
 
+fetchData();
+
 // Fetch every hour, might change later
 cron.schedule("0 * * * *", fetchData);
 
