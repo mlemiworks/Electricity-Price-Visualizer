@@ -2,8 +2,10 @@
 // Required format is "YYYYMMDDHH00"
 // For example: "202201010000" is the first of January 2022 at midnight
 // This function returns an array with two formatted dates:
-// 1. The start of the current day
+// 1. Date long enough before the current day to ensure that the data is available,
+//    in this case 24 hours before the start of the current day seems to be enough
 // 2. Twelve hours after the start of the current day
+
 const moment = require("moment-timezone");
 
 // Timezone for Helsinki (Finnish time)
@@ -31,13 +33,14 @@ const formatDatesForApi = async () => {
     )
     .toDate(); // Convert to native Date object
 
-  // Format the start of the day
+  // Related to timezones and the time prices are updated, sometimes the data is too far in the future
+  // In this case, we need to fetch the data from the previous day, so we have a buffer of 12 hours or so.
   const startOfDay24HoursEarlier = moment(startOfDay)
     .subtract(1, "days")
     .toDate();
   const startDate = await formatTime(startOfDay24HoursEarlier);
 
-  // 12 hours later from the start of the day
+  // 12 hours later from the start of the day, this doesnt really, but the API requires a start and end date
   const twelveHoursLater = new Date(startOfDay.getTime() + 12 * 60 * 60 * 1000); // Add 12 hours in milliseconds
   const hour12Ahead = await formatTime(twelveHoursLater);
 

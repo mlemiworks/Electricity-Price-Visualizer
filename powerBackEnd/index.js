@@ -12,6 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.static("dist"));
 
+// Cache for the data, 60 minutes, scheduled to fetch new data every hour
 const dataCache = new NodeCache({ stdTTL: 3600 }); // 60 minutes cache
 
 const fetchData = async () => {
@@ -21,17 +22,19 @@ const fetchData = async () => {
   const url = `https://web-api.tp.entsoe.eu/api?documentType=A44&out_Domain=10YFI-1--------U&in_Domain=10YFI-1--------U&periodStart=${periodStart}&periodEnd=${periodEnd}&securityToken=${apiKey}`;
 
   const response = await fetch(url);
-  const xmlData = await response.text();
-  const parsedData = await parseXMLtoObject(xmlData);
+  const xmlData = await response.text(); // Response is XML
+  const parsedData = await parseXMLtoObject(xmlData); // Parse XML to JS object
 
   dataCache.set("priceData", parsedData);
 };
 
+// Initial fetch
 fetchData();
 
-// Fetch every hour, might change later
+// Scheduler to fetch data every hour
 cron.schedule("0 * * * *", fetchData);
 
+// API endpoint, if data is not in cache, fetch it
 app.get("/api", async (req, res) => {
   const cachedData = dataCache.get("priceData");
 
@@ -46,5 +49,5 @@ app.get("/api", async (req, res) => {
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  console.log(`Proxy server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

@@ -15,6 +15,7 @@ body {
 
 .clockContainer {
   font: 1.5em Courier, sans-serif;
+  justify-content: center;
 }
 
 .title {
@@ -34,13 +35,6 @@ body {
   flex: 1;
   text-align: center;
   justify-content: space-between;
-}
-
-.header-item.left {
-  text-align: left;
-  justify-content: center;
-  width: auto;
-  margin: 0px;
 }
 
 .header-item.mid {
@@ -322,5 +316,6 @@ h2 {
 
   .title {
     margin-top: 20px;
+    margin-bottom: 5px;
   }
 }
