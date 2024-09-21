@@ -3,6 +3,11 @@ import ClockFace from "./components/clockFace";
 import WeatherWidget from "./components/weatherWidget";
 import { fetchData } from "./utils/api";
 
+// Main component
+// Fetches data from server and passes it to child components
+// Child components are ClockFace and WeatherWidget
+// ClockFace visualizes the data on a clock face
+// WeatherWidget displays the current weather
 const App = () => {
   const [data, setData] = useState([]);
 
@@ -10,7 +15,6 @@ const App = () => {
     const fetchAndSetData = async () => {
       const dataToSet = await fetchData(); // Fetch data from server
       setData(dataToSet);
-      console.log("Data fetched:", dataToSet);
     };
 
     fetchAndSetData();
@@ -26,7 +30,7 @@ const App = () => {
         <div className="header-item mid">
           <h1 className="title">Sähkö tänään</h1>
         </div>
-        <div className="header-item right"> </div>
+        <div className="header-item right"></div>
       </div>
       <ClockFace data={data} />
       <div className="footer">© Markus Lemiläinen 2024</div>

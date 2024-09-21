@@ -1,6 +1,8 @@
 const { DOMParser } = require("xmldom"); // Importing DOMParser from xmldom
 const moment = require("moment-timezone"); // Importing moment-timezone
 
+//Timezone has to be set to Helsinki, because the prices are in Helsinki timezone.
+
 // Timezone for Helsinki
 const timeZone = "Europe/Helsinki";
 
@@ -43,7 +45,6 @@ const pairPricesWithDate = (data) => {
 
   // Get the start of today's date at 00:00 in Helsinki time
   const startOfToday = moment.tz(timeZone).startOf("day");
-  console.log(startOfToday);
 
   // Pair prices with time slots (hours)
   const pairedData = data.prices

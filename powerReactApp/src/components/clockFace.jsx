@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+// Alternative color scale
 // const colorScale = [
 //   "rgba(34, 139, 34, 1)", // Forest Green
 //   "rgba(85, 170, 85, 0.9)", // Medium Sea Green
@@ -31,12 +32,14 @@ const colorScale = [
 ];
 
 const ClockFace = ({ data }) => {
-  const [sectors, setSectors] = useState([]);
+  const [sectors, setSectors] = useState([]); // Sectors for the clock face, 12 for each hour
   const [coloredAmPrices, setColoredAmPrices] = useState([]);
   const [coloredPmPrices, setColoredPmPrices] = useState([]);
 
-  const totalSectors = 12;
+  const totalSectors = 12; // 12 sectors for each hour
 
+  // Draws the clockface with numbers and empty sectors, which will be filled with data
+  // when the data is fetched from the server
   useEffect(() => {
     const sectorElements = [];
     for (let i = 0; i < totalSectors; i++) {
@@ -46,6 +49,8 @@ const ClockFace = ({ data }) => {
     generateTimeDigits();
   }, []);
 
+  // WHen data is present, assign colors to the sectors based on the price
+  // lower price = greener, higher price = redder
   useEffect(() => {
     if (data.length > 0) {
       // Check if data is not empty
@@ -70,32 +75,6 @@ const ClockFace = ({ data }) => {
     setColoredPmPrices(pmPrices);
   };
 
-  // const assignColorToPrice = () => {
-  //   const amHours = data.slice(0, 12);
-  //   const pmHours = data.slice(12, 24);
-
-  //   const amPrices = amHours.map((hour) => hour.price);
-  //   const pmPrices = pmHours.map((hour) => hour.price);
-
-  //   const minAmPrice = Math.min(...amPrices);
-  //   const maxAmPrice = Math.max(...amPrices);
-
-  //   const minPmPrice = Math.min(...pmPrices);
-  //   const maxPmPrice = Math.max(...pmPrices);
-
-  //   const coloredAmPrices = amPrices.map((price) => ({
-  //     price: price,
-  //     color: getColorForPrice(price, minAmPrice, maxAmPrice, colorScale),
-  //   }));
-  //   const coloredPmPrices = pmPrices.map((price) => ({
-  //     price: price,
-  //     color: getColorForPrice(price, minPmPrice, maxPmPrice, colorScale),
-  //   }));
-
-  //   setColoredAmPrices(coloredAmPrices);
-  //   setColoredPmPrices(coloredPmPrices);
-  // };
-
   const getColorForPrice = (price, minPrice, maxPrice, colorScale) => {
     const range = maxPrice - minPrice;
     const index = Math.floor(
@@ -104,6 +83,7 @@ const ClockFace = ({ data }) => {
     return colorScale[index];
   };
 
+  // Generates the numbers around the clock face for each clock, the AM and PM clock.
   const generateTimeDigits = () => {
     const clocks = document.querySelectorAll(".clock");
     const clockDigits = document.querySelectorAll(".clockDigits");
@@ -167,14 +147,17 @@ const ClockFace = ({ data }) => {
       <div className="clockBox-1">
         <div className="clockDigits"></div>
         <div className="clock">
+          {/* Map the sectors to the clock face */}
           {sectors.map((sector, index) => (
             <div
               key={index}
               className="sector"
               style={{
+                /* Set the background color of the sector based on the price */
                 backgroundColor: coloredAmPrices[index]?.color || "transparent",
               }}
             >
+              {/* priceWrapper for if we want to edit how price looks */}
               <div className="price-wrapper">
                 <div
                   className="sector-price"

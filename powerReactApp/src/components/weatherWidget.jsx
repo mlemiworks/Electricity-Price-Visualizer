@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+// Simple weather widget that displays the current weather based on the user's location
+// If the user denies the location request, the widget displays a message
 const WeatherWidget = () => {
   const [weatherData, setWeatherData] = useState(null);
   const [error, setError] = useState(null);
@@ -37,6 +39,7 @@ const WeatherWidget = () => {
     getWeather();
   }, []);
 
+  // Setting the weather icon based on the weather data
   useEffect(() => {
     if (weatherData && weatherData.weather && weatherData.weather.length > 0) {
       const icon = weatherData.weather[0].icon;
