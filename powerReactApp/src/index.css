@@ -74,8 +74,8 @@ h2 {
 @media (min-width: 600px) {
   .clockContainer {
     display: flex;
-    justify-content: center;
     flex-direction: row;
+    justify-content: center;
     border-top: 1px solid #000;
     border-bottom: 1px solid #000;
     height: fit-content;
@@ -103,6 +103,7 @@ h2 {
   .clockBox-2 {
     border-top-right-radius: 20px;
     border-bottom-right-radius: 20px;
+    margin-right: 75px;
   }
 
   .key {
