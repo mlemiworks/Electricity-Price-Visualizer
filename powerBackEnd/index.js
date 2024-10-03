@@ -19,6 +19,9 @@ const fetchData = async () => {
   const [periodStart, periodEnd] = await formatDatesForApi();
   const apiKey = process.env.VITE_API_KEY;
 
+  console.log("periodStart", periodStart);
+  console.log("periodEnd", periodEnd);
+
   const url = `https://web-api.tp.entsoe.eu/api?documentType=A44&out_Domain=10YFI-1--------U&in_Domain=10YFI-1--------U&periodStart=${periodStart}&periodEnd=${periodEnd}&securityToken=${apiKey}`;
 
   const response = await fetch(url);
@@ -26,6 +29,7 @@ const fetchData = async () => {
   const parsedData = await parseXMLtoObject(xmlData); // Parse XML to JS object
 
   dataCache.set("priceData", parsedData);
+  console.log(parsedData)
 };
 
 // Initial fetch
