@@ -40,11 +40,11 @@ const formatDatesForApi = async () => {
     .toDate();
   const startDate = await formatTime(startOfDay24HoursEarlier);
 
-  // 12 hours later from the start of the day, this doesnt really, but the API requires a start and end date
-  const twelveHoursLater = new Date(startOfDay.getTime() + 12 * 60 * 60 * 1000); // Add 12 hours in milliseconds
-  const hour12Ahead = await formatTime(twelveHoursLater);
+  // 48 hours later from the start of the day, to ensure that the data is available.
+  const aheadTime = new Date(startOfDay.getTime() + 48 * 60 * 60 * 1000); // Add 48 hours in milliseconds
+  const endDate = await formatTime(aheadTime);
 
-  return [startDate, hour12Ahead];
+  return [startDate, endDate];
 };
 
 // Format the date to fit the API's required format "YYYYMMDDHH00"
@@ -53,7 +53,7 @@ const formatTime = async (date) => {
   const month = String(date.getMonth() + 1).padStart(2, "0"); // +1 because months are 0-indexed in JS
   const day = String(date.getDate()).padStart(2, "0");
   const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = "00"; // Always "00" as per the requirement
+  const minutes = "00"; // Always "00" as per the API requirement
 
   return `${year}${month}${day}${hours}${minutes}`;
 };

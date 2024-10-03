@@ -9,30 +9,67 @@ import { fetchData } from "./utils/api";
 // ClockFace visualizes the data on a clock face
 // WeatherWidget displays the current weather
 const App = () => {
-  const [data, setData] = useState([]);
+  const [dataToDisplay, setDataToDisplay] = useState([]);
+  const [todaysPrices, setTodaysPrices] = useState([]);
+  const [tomorrowsPrices, setTomorrowsPrices] = useState([]);
+  const [tomorrowToggle, setTomorrowToggle] = useState(false);
+  const [dayButtonDisabled, setDayButtonDisabled] = useState(true);
 
   useEffect(() => {
     const fetchAndSetData = async () => {
-      const dataToSet = await fetchData(); // Fetch data from server
-      setData(dataToSet);
+      const data = await fetchData();
+      console.log("data", data)
+      const todaysData = data.todaysPrices
+      console.log("todaysdata", todaysData)
+      const tomorrowsData = data.tomorrowsPrices
+      
+      setTodaysPrices(todaysData);
+      setTomorrowsPrices(tomorrowsData);
+      setDataToDisplay(todaysData);
     };
 
     fetchAndSetData();
   }, []);
+
+  useEffect(() => {
+    if (tomorrowsPrices.length > 1) {
+      setDayButtonDisabled(false); }
+      else {
+        setDayButtonDisabled(true);
+    }
+  }
+  , [tomorrowsPrices]);
+
+
+  useEffect(() => {
+    if (tomorrowToggle) {
+      setDataToDisplay(tomorrowsPrices);
+    } else {
+      setDataToDisplay(todaysPrices);
+    }
+  }, [tomorrowToggle]);
+
 
   return (
     <div className="container">
       <div className="header">
         <div className="header-item left">
           {" "}
-          <WeatherWidget data={data} />
+          <WeatherWidget data={dataToDisplay} />
         </div>
         <div className="header-item mid">
-          <h1 className="title">Sähkö tänään</h1>
+          <h1 className="title">{tomorrowToggle ? "Sähkö huomenna" : "Sähkö tänään"}</h1>
+          <button className="dayToggle" id="dayToggle" disabled={dayButtonDisabled} onClick={() => setTomorrowToggle(!tomorrowToggle)}>
+        {tomorrowToggle ? "Sähkö tänään" : "Sähkö huomenna"}
+      </button>
+      <p className="buttonInfo">{ dayButtonDisabled ? "Huomisen hinnat päivittyvät noin klo 14" : " "}</p>
         </div>
-        <div className="header-item right"></div>
+        
+        <div className="header-item right">
+        
+        </div>
       </div>
-      <ClockFace data={data} />
+      <ClockFace data={dataToDisplay} />
       <div className="footer">© Markus Lemiläinen 2024</div>
     </div>
   );
