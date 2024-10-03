@@ -20,20 +20,46 @@ body {
 
 .title {
   margin: 0;
+  font-size: 40px;
+}
+
+.daySelector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .buttonInfo {
   font-size: 14px;
-  margin: 0;
+  margin-top: 10px;
+  margin-bottom: 0px;
   color: rgb(141, 139, 139);
   font-style: italic;
-  cursor: pointer;
+  
+
 }
 
 .dayToggle {
   
-  padding: 5px;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  margin-left: 10px;
+  font-family: inherit;
+  font-size: 40px;
+  background-color: #395f7cfa;
+  border-radius: 5px;
+  color: white;
+  padding: 2px 5px;
+
+  border: 2px solid #325069;
+  border-color: rgba(211, 211, 211, 0.205);
+  
+  
+}
+
+.dayToggle:hover {
+  background-color: #314b61;
+  border-radius: 5px;
 }
 
 .header {
@@ -332,5 +358,9 @@ h2 {
   .title {
     margin-top: 20px;
     margin-bottom: 5px;
+  }
+
+  .dayToggle {
+    margin-top: 15px;
   }
 }

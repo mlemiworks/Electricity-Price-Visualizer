@@ -58,10 +58,13 @@ const App = () => {
           <WeatherWidget data={dataToDisplay} />
         </div>
         <div className="header-item mid">
-          <h1 className="title">{tomorrowToggle ? "Sähkö huomenna" : "Sähkö tänään"}</h1>
+          <div className="daySelector">
+          <h1 className="title">{tomorrowToggle ? "Sähkö" : "Sähkö"}</h1>
           <button className="dayToggle" id="dayToggle" disabled={dayButtonDisabled} onClick={() => setTomorrowToggle(!tomorrowToggle)}>
-        {tomorrowToggle ? "Sähkö tänään" : "Sähkö huomenna"}
+        {tomorrowToggle ? "huomenna" : "tänään"}
       </button>
+          </div>
+          
       <p className="buttonInfo">{ dayButtonDisabled ? "Huomisen hinnat päivittyvät noin klo 14" : " "}</p>
         </div>
         
