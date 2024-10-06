@@ -9,7 +9,6 @@ const timeZone = "Europe/Helsinki";
 // Function to parse XML to Object
 const parseXMLtoObject = (text) => {
   // Parse the XML using xmldom
-  console.log("text", text);
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(text, "text/xml");
   // Extract the start date
@@ -33,7 +32,6 @@ const parseXMLtoObject = (text) => {
     result.prices.push(priceWithTax);
   }
 
-  console.log("result", result);
   // Call function to pair prices with dates
   const finalData = pairPricesWithDate(result);
 
@@ -52,15 +50,18 @@ const pairPricesWithDate = (data) => {
   const startOfTomorrow = moment.tz(timeZone).startOf("day").add(1, "days");
 
   // Pair prices with time slots (hours)
-  const pairedData = data.prices
-    .map((price, index) => {
-      // Add hours to the base date
-      const date = baseDate.clone().add(index, "hours");
-      return { date: date.toDate(), price }; // Convert to native Date object
-    })
-    
-    const todaysPrices = pairedData.filter((item) => item.date >= startOfToday && item.date <= startOfTomorrow);
-    const tomorrowsPrices = pairedData.filter((item) => item.date >= startOfTomorrow);
+  const pairedData = data.prices.map((price, index) => {
+    // Add hours to the base date
+    const date = baseDate.clone().add(index, "hours");
+    return { date: date.toDate(), price }; // Convert to native Date object
+  });
+
+  const todaysPrices = pairedData.filter(
+    (item) => item.date >= startOfToday && item.date <= startOfTomorrow
+  );
+  const tomorrowsPrices = pairedData.filter(
+    (item) => item.date >= startOfTomorrow
+  );
 
   return { todaysPrices, tomorrowsPrices };
 };
