@@ -93,7 +93,14 @@ const ClockFace = ({ data }) => {
 
     clocks.forEach((clock) => {
       const radius = clock.offsetWidth / 2;
-      const numberRadius = radius + 16; // Radius of the circle where the numbers will be placed.
+
+      let numberRadius = 0;
+
+      if (clock.indexOf === 0) {
+        numberRadius = radius + 16; // Radius of the circle where the numbers will be placed.
+      } else {
+        numberRadius = radius + 18; // Slighly larger radius for the PM clock's double digits
+      }
 
       if (indexCounter !== 0) {
         // Twelve numbers around the clock
