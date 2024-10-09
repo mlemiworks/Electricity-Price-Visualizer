@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import ClockFace from "./components/clockFace";
-import WeatherWidget from "./components/weatherWidget";
+//import WeatherWidget from "./components/weatherWidget";
 import { fetchData } from "./utils/api";
 
 // Main component
@@ -12,17 +12,33 @@ const App = () => {
   const [dataToDisplay, setDataToDisplay] = useState([]);
   const [todaysPrices, setTodaysPrices] = useState([]);
   const [tomorrowsPrices, setTomorrowsPrices] = useState([]);
-  const [tomorrowToggle, setTomorrowToggle] = useState(false);
+  const [showTomorrow, setShowTomorrow] = useState(false);
   const [dayButtonDisabled, setDayButtonDisabled] = useState(true);
+
+  const [dates, setDates] = useState([]);
+
+  useEffect(() => {
+    const todaysDate = new Date().toLocaleString("fi-FI", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+    const tomorrowsDate = new Date(
+      new Date().getTime() + 24 * 60 * 60 * 1000
+    ).toLocaleString("fi-FI", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+    setDates([todaysDate, tomorrowsDate]);
+  }, []);
 
   useEffect(() => {
     const fetchAndSetData = async () => {
       const data = await fetchData();
-      console.log("data", data)
-      const todaysData = data.todaysPrices
-      console.log("todaysdata", todaysData)
-      const tomorrowsData = data.tomorrowsPrices
-      
+      const todaysData = data.todaysPrices;
+      const tomorrowsData = data.tomorrowsPrices;
+
       setTodaysPrices(todaysData);
       setTomorrowsPrices(tomorrowsData);
       setDataToDisplay(todaysData);
@@ -32,47 +48,62 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    console.log(tomorrowsPrices.length);
+    console.log(tomorrowsPrices);
     if (tomorrowsPrices.length > 1) {
-      setDayButtonDisabled(false); }
-      else {
-        setDayButtonDisabled(true);
+      setDayButtonDisabled(false);
+    } else {
+      setDayButtonDisabled(true);
     }
-  }
-  , [tomorrowsPrices]);
-
+  }, [tomorrowsPrices]);
 
   useEffect(() => {
-    if (tomorrowToggle) {
+    if (showTomorrow) {
       setDataToDisplay(tomorrowsPrices);
     } else {
       setDataToDisplay(todaysPrices);
     }
-  }, [tomorrowToggle]);
-
+  }, [showTomorrow, todaysPrices, tomorrowsPrices]);
 
   return (
     <div className="container">
       <div className="header">
         <div className="header-item left">
           {" "}
-          <WeatherWidget data={dataToDisplay} />
+          {/* <WeatherWidget data={dataToDisplay} /> */}
         </div>
+
         <div className="header-item mid">
           <div className="daySelector">
-          <h1 className="title">{tomorrowToggle ? "Sähkö" : "Sähkö"}</h1>
-          <button className="dayToggle" id="dayToggle" disabled={dayButtonDisabled} onClick={() => setTomorrowToggle(!tomorrowToggle)}>
-        {tomorrowToggle ? "huomenna" : "tänään"}
-      </button>
+            <h1 className="title">
+              {showTomorrow ? "Sähkö huomenna" : "Sähkö tänään"}
+            </h1>
           </div>
-          
-      <p className="buttonInfo">{ dayButtonDisabled ? "Huomisen hinnat päivittyvät noin klo 14" : " "}</p>
         </div>
-        
+
         <div className="header-item right">
-        
+          <button
+            className="dayToggle"
+            id="dayToggle"
+            disabled={dayButtonDisabled}
+            onClick={() => setShowTomorrow(!showTomorrow)}
+          >
+            {showTomorrow ? "Hinta tänään" : "Huomisen hinnat"}
+          </button>
+          <p className="buttonInfo">Huomisen hinnat päivittyvät noin klo 14</p>
         </div>
       </div>
-      <ClockFace data={dataToDisplay} />
+
+      <div className="content">
+        <div className="dateInfo">
+          <p>{dates[showTomorrow ? 1 : 0]}</p>
+        </div>
+        <ClockFace
+          data={dataToDisplay}
+          dates={dates}
+          showTomorrow={showTomorrow}
+        />
+      </div>
       <div className="footer">© Markus Lemiläinen 2024</div>
     </div>
   );

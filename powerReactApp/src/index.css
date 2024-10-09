@@ -11,6 +11,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: #232727;
 }
 
 .clockContainer {
@@ -21,6 +22,7 @@ body {
 .title {
   margin: 0;
   font-size: 40px;
+  font-weight: lighter;
 }
 
 .daySelector {
@@ -32,34 +34,47 @@ body {
 .buttonInfo {
   font-size: 14px;
   margin-top: 10px;
-  margin-bottom: 0px;
+  margin-bottom: 5px;
   color: rgb(141, 139, 139);
   font-style: italic;
-  
+}
 
+.dateInfo {
+  font-size: 20px;
+  margin: 0px;
+  border-top: 1px solid #000;
+  text-align: center;
+}
+
+.dateInfo p {
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 .dayToggle {
-  
-  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.2);
+  width: 200px;
   cursor: pointer;
-  margin-left: 10px;
   font-family: inherit;
-  font-size: 40px;
+  font-size: 20px;
   background-color: #395f7cfa;
   border-radius: 5px;
   color: white;
   padding: 2px 5px;
-
+  margin-top: 25px;
   border: 2px solid #325069;
   border-color: rgba(211, 211, 211, 0.205);
-  
-  
 }
 
 .dayToggle:hover {
   background-color: #314b61;
   border-radius: 5px;
+}
+
+.dayToggle:disabled {
+  background-color: #3d4c57;
+  border-radius: 5px;
+  color: rgb(99, 98, 98);
+  cursor: default;
 }
 
 .header {
@@ -116,7 +131,6 @@ h2 {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    border-top: 1px solid #000;
     border-bottom: 1px solid #000;
     height: fit-content;
     background-color: #232727;
@@ -130,7 +144,7 @@ h2 {
   .clockBox-2 {
     position: relative;
     background-color: #314b6162;
-    margin: 20px 0px;
+    margin-bottom: 20px;
   }
 
   .clockBox-1 {
@@ -148,7 +162,7 @@ h2 {
 
   .key {
     position: relative;
-    top: 30px;
+    top: 8px;
     left: 85px;
     font-size: 18px;
   }
@@ -224,6 +238,7 @@ h2 {
   margin-top: auto; /* Pushes footer to the bottom */
   text-align: center;
   padding: 15px 0;
+  background-color: black;
 }
 
 @keyframes fadeIn {
@@ -300,11 +315,8 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-top: 1px solid #000;
-    border-bottom: 1px solid #000;
     justify-content: center;
-    background-color: #232727;
-    padding: 15px;
+    margin-bottom: 50px;
   }
 
   .clockBox-1,
@@ -317,6 +329,7 @@ h2 {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom: 1px solid #0000002f;
+    margin-top: -15px;
   }
 
   .clockBox-2 {
@@ -351,7 +364,7 @@ h2 {
 
   .key {
     position: relative;
-    top: 30px;
+    top: 10px;
     left: -130px;
   }
 
@@ -361,6 +374,10 @@ h2 {
   }
 
   .dayToggle {
-    margin-top: 15px;
+    margin-top: 0px;
+  }
+
+  .dateInfo p {
+    margin-bottom: 0px;
   }
 }

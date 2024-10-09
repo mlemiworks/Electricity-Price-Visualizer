@@ -37,7 +37,7 @@ const fetchData = async () => {
 fetchData();
 
 cron.schedule(
-  "0 14 * * *",
+  "0 0,14 * * *",
   () => {
     fetchData();
   },
