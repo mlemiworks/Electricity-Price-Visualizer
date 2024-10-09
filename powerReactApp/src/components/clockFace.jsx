@@ -60,8 +60,12 @@ const ClockFace = ({ data }) => {
 
   const assignColorToPrice = () => {
     const prices = data.map((hour) => hour.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    const minPrice = Math.min(
+      ...prices.filter((price) => typeof price === "number")
+    );
+    const maxPrice = Math.max(
+      ...prices.filter((price) => typeof price === "number")
+    );
 
     const coloredPrices = prices.map((price) => ({
       price: price,
@@ -76,6 +80,10 @@ const ClockFace = ({ data }) => {
   };
 
   const getColorForPrice = (price, minPrice, maxPrice, colorScale) => {
+    if (price === "N/A") {
+      return "rgba(150, 150, 150, 0.9)"; // Assign light gray color for "N/A", missing data
+    }
+
     const range = maxPrice - minPrice;
     const index = Math.floor(
       ((price - minPrice) / range) * (colorScale.length - 1)
