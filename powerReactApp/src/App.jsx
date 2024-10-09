@@ -48,8 +48,6 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    console.log(tomorrowsPrices.length);
-    console.log(tomorrowsPrices);
     if (tomorrowsPrices.length > 1) {
       setDayButtonDisabled(false);
     } else {

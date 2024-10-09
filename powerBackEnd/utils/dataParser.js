@@ -4,7 +4,7 @@ const moment = require("moment-timezone"); // Importing moment-timezone
 //Timezone has to be set to Helsinki, because the prices are in Helsinki timezone.
 
 // Timezone for Helsinki
-const timeZone = "Europe/Paris";
+const timeZone = "Europe/Helsinki";
 // timezone one hour ahead of Helsinki
 
 // Function to parse XML to Object
@@ -38,7 +38,7 @@ const parseXMLtoObject = (text) => {
     // Fill in missing positions
     if (position !== expectedPosition) {
       while (expectedPosition !== position) {
-        result.prices.push(0); // Fill gap with "N/A"
+        result.prices.push("N/A"); // Fill gap with "N/A"
         expectedPosition++;
         if (expectedPosition > 24) {
           expectedPosition = 1; // Reset after 24 hours
@@ -68,6 +68,9 @@ const parseXMLtoObject = (text) => {
 
 // Function to pair prices with dates
 const pairPricesWithDate = (data) => {
+  let todaysPrices = [];
+  let tomorrowsPrices = [];
+
   // Parse the base date in Helsinki timezone
   const baseDate = moment.tz(data.date, timeZone);
 
@@ -85,12 +88,10 @@ const pairPricesWithDate = (data) => {
     return { date: date.toDate(), price }; // Convert to native Date object
   });
 
-  const todaysPrices = pairedData.filter(
+  todaysPrices = pairedData.filter(
     (item) => item.date >= startOfToday && item.date <= startOfTomorrow
   );
-  const tomorrowsPrices = pairedData.filter(
-    (item) => item.date >= startOfTomorrow
-  );
+  tomorrowsPrices = pairedData.filter((item) => item.date >= startOfTomorrow);
 
   console.log(todaysPrices.length);
 
