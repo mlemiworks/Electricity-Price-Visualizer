@@ -30,6 +30,9 @@ const fetchData = async () => {
   const xmlData = await response.text(); // Response is XML
   const parsedData = await parseXMLtoObject(xmlData); // Parse XML to JS object
 
+  console.log("Data fetched and parsed");
+  console.log(parsedData);
+
   dataCache.set("priceData", parsedData);
 };
 

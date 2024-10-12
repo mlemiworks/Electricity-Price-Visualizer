@@ -1,99 +1,142 @@
-const { DOMParser } = require("xmldom"); // Importing DOMParser from xmldom
 const moment = require("moment-timezone"); // Importing moment-timezone
+const xml2js = require("xml2js");
 
 //Timezone has to be set to Helsinki, because the prices are in Helsinki timezone.
 
 // Timezone for Helsinki
 const timeZone = "Europe/Helsinki";
-// timezone one hour ahead of Helsinki
+let finalData = [];
 
 // Function to parse XML to Object
 const parseXMLtoObject = (text) => {
-  console.log(text);
-  // Parse the XML using xmldom
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(text, "text/xml");
-  // Extract the start date
-  const startDate = xmlDoc.getElementsByTagName("start")[0].textContent;
+  const xmlData = text;
 
-  // Extract the points
-  const points = xmlDoc.getElementsByTagName("Point");
+  xml2js.parseString(xmlData, { explicitArray: false }, (err, result) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
 
-  // Create the result object
-  const result = {
-    date: startDate,
-    prices: [],
-  };
+    const timeSeries = result["Publication_MarketDocument"]["TimeSeries"];
+    const jsonResult = {};
 
-  let expectedPosition = 1; // Start with the first position (hour 1)
+    timeSeries.forEach((series) => {
+      const period = series["Period"]["timeInterval"];
+      const start = period["start"];
+      const pricePoints = series["Period"]["Point"].map((point) => ({
+        position: point.position,
+        price: parseFloat(point["price.amount"]), // Ensure price is a float here
+      }));
 
-  for (let i = 0; i < points.length; i++) {
-    const price = parseFloat(
-      points[i].getElementsByTagName("price.amount")[0].textContent
-    );
-    const position = parseInt(
-      points[i].getElementsByTagName("position")[0].textContent
-    );
-
-    // Fill in missing positions
-    if (position !== expectedPosition) {
-      while (expectedPosition !== position) {
-        result.prices.push("N/A"); // Fill gap with "N/A"
-        expectedPosition++;
-        if (expectedPosition > 24) {
-          expectedPosition = 1; // Reset after 24 hours
-        }
+      // Initialize the date entry if it doesn't exist
+      if (!jsonResult[start]) {
+        jsonResult[start] = [];
       }
+
+      jsonResult[start].push(...pricePoints);
+    });
+
+    // Convert keys to an array, sort the dates, and build a new object
+    const sortedDates = Object.keys(jsonResult).sort(
+      (a, b) => new Date(a) - new Date(b)
+    );
+
+    // Create a new sorted object
+    const sortedJsonResult = {};
+    sortedDates.forEach((date) => {
+      sortedJsonResult[date] = jsonResult[date];
+    });
+
+    // Total number of expected positions
+    const totalPositions = 24;
+
+    // Create a new object to hold filled price points for each date
+    const filledPricePointsByDate = {};
+
+    // Fill missing positions with default price 0 for each date
+    for (const date in sortedJsonResult) {
+      const filledPricePoints = [];
+      for (let i = 1; i <= totalPositions; i++) {
+        const positionStr = i.toString();
+        const existingPoint = sortedJsonResult[date].find(
+          (point) => point.position === positionStr
+        );
+
+        // If point exists, use its price; otherwise, use the default price of 0
+        filledPricePoints.push({
+          position: positionStr,
+          price: existingPoint
+            ? parseFloat(((existingPoint.price * 1.255) / 10).toFixed(2))
+            : 0.0, // Ensure price is a float
+        });
+      }
+      filledPricePointsByDate[date] = filledPricePoints;
     }
 
-    // Add the price with VAT
-    const priceWithTax = parseFloat(((price * 1.255) / 10).toFixed(2));
-    result.prices.push(priceWithTax);
+    shiftPrices(filledPricePointsByDate);
+    //console.log("this is shifted data", filledPricePointsByDate);
 
-    // Move to the next expected position
-    expectedPosition++;
-    if (expectedPosition > 24) {
-      expectedPosition = 1; // Reset after 24 hours
-    }
-  }
+    // Now call the shift and pair functions in the correct order
+    finalData = pairPricesWithDate(filledPricePointsByDate);
 
-  console.log(result.prices);
-
-  // Call function to pair prices with dates
-  const finalData = pairPricesWithDate(result);
-  console.log(finalData);
+    console.log(finalData);
+  });
 
   return finalData;
 };
 
-// Function to pair prices with dates
+function shiftPrices(data) {
+  Object.keys(data).forEach((date) => {
+    const prices = data[date].map((item) => item.price);
+    const shiftedPrices = [prices[prices.length - 1], ...prices.slice(0, -1)]; // Shift prices one down
+
+    data[date] = data[date].map((item, index) => ({
+      position: item.position,
+      price: shiftedPrices[index],
+    }));
+  });
+}
+
 const pairPricesWithDate = (data) => {
   let todaysPrices = [];
   let tomorrowsPrices = [];
 
-  // Parse the base date in Helsinki timezone
-  const baseDate = moment.tz(data.date, timeZone);
+  // Define the Helsinki timezone
+  const timeZone = "Europe/Helsinki";
 
   // Get the start of today's date at 00:00 in Helsinki time
-  const startOfToday = moment.tz(timeZone).startOf("day");
+  const startOfToday = moment.tz(timeZone).startOf("day").add(3, "hours");
+  console.log("start of today", startOfToday);
 
   // Get the start of tomorrow's date at 00:00 in Helsinki time
-  const startOfTomorrow = moment.tz(timeZone).startOf("day").add(1, "days");
-  console.log(startOfTomorrow);
+  const startOfTomorrow = moment
+    .tz(timeZone)
+    .startOf("day")
+    .add(1, "days")
+    .add(3, "hours");
 
-  // Pair prices with time slots (hours)
-  const pairedData = data.prices.map((price, index) => {
-    // Add hours to the base date
-    const date = baseDate.clone().add(index, "hours");
-    return { date: date.toDate(), price }; // Convert to native Date object
+  // Process each date in the data object
+  Object.keys(data).forEach((dateKey) => {
+    // Parse the base date key and add two hours in Helsinki time
+    const baseDate = moment.tz(dateKey, timeZone).add(2, "hours");
+
+    // Pair prices with time slots (hours) based on the base date
+    const pairedData = data[dateKey].map((item, index) => {
+      const date = baseDate.clone().add(index, "hours");
+      return { date: date.toDate(), price: item.price };
+    });
+
+    // Separate today's and tomorrow's prices based on the Helsinki time zone
+    pairedData.forEach((item) => {
+      const itemDate = moment(item.date);
+
+      if (itemDate.isBetween(startOfToday, startOfTomorrow, null, "[)")) {
+        todaysPrices.push(item);
+      } else if (itemDate.isSameOrAfter(startOfTomorrow)) {
+        tomorrowsPrices.push(item);
+      }
+    });
   });
-
-  todaysPrices = pairedData.filter(
-    (item) => item.date >= startOfToday && item.date <= startOfTomorrow
-  );
-  tomorrowsPrices = pairedData.filter((item) => item.date >= startOfTomorrow);
-
-  console.log(todaysPrices.length);
 
   return { todaysPrices, tomorrowsPrices };
 };

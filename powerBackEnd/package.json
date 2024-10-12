@@ -21,6 +21,7 @@
     "node-cron": "^3.0.3",
     "node-fetch": "^2.7.0",
     "nodemon": "^3.1.5",
+    "xml2js": "^0.6.2",
     "xmldom": "^0.6.0"
   }
 }
