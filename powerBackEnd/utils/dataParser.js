@@ -74,25 +74,28 @@ const parseXMLtoObject = (text) => {
     }
 
     shiftPrices(filledPricePointsByDate);
-    //console.log("this is shifted data", filledPricePointsByDate);
+    console.log("this is shifted data", filledPricePointsByDate);
 
     // Now call the shift and pair functions in the correct order
     finalData = pairPricesWithDate(filledPricePointsByDate);
 
-    console.log(finalData);
+    //console.log(finalData);
   });
 
   return finalData;
 };
 
 function shiftPrices(data) {
+  let lastPriceOfPreviousDay = 0;
+
   Object.keys(data).forEach((date) => {
     const prices = data[date].map((item) => item.price);
-    const shiftedPrices = [prices[prices.length - 1], ...prices.slice(0, -1)]; // Shift prices one down
+    prices.unshift(lastPriceOfPreviousDay);
+    lastPriceOfPreviousDay = prices.pop();
 
     data[date] = data[date].map((item, index) => ({
       position: item.position,
-      price: shiftedPrices[index],
+      price: prices[index],
     }));
   });
 }
