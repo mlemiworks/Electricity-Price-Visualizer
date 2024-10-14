@@ -80,10 +80,6 @@ const ClockFace = ({ data }) => {
   };
 
   const getColorForPrice = (price, minPrice, maxPrice, colorScale) => {
-    if (price === "N/A") {
-      return "rgba(150, 150, 150, 0.9)"; // Assign light gray color for "N/A", missing data
-    }
-
     const range = maxPrice - minPrice;
     const index = Math.floor(
       ((price - minPrice) / range) * (colorScale.length - 1)
