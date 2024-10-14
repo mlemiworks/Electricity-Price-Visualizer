@@ -7,9 +7,9 @@ const xml2js = require("xml2js");
 const timeZone = "Europe/Helsinki";
 let finalData = [];
 
-// Function to parse XML to Object
-const parseXMLtoObject = (text) => {
-  const xmlData = text;
+// Function to parse XML to Object for better manipulation
+const parseXMLtoObject = (rawXml) => {
+  const xmlData = rawXml;
 
   xml2js.parseString(xmlData, { explicitArray: false }, (err, result) => {
     if (err) {
@@ -41,19 +41,22 @@ const parseXMLtoObject = (text) => {
       (a, b) => new Date(a) - new Date(b)
     );
 
-    // Create a new sorted object
+    // Create a new sorted object.
+    // Sometimes the dates in data are not in order, so we need to sort it.
     const sortedJsonResult = {};
     sortedDates.forEach((date) => {
       sortedJsonResult[date] = jsonResult[date];
     });
 
-    // Total number of expected positions
+    // Total number of expected positions (hours) in the data
     const totalPositions = 24;
 
     // Create a new object to hold filled price points for each date
     const filledPricePointsByDate = {};
 
-    // Fill missing positions with default price 0 for each date
+    // Fill missing positions with default price 0 for each date.
+    // Sometimes, if there are consecutive 0 prices, it skips the position in the xml.
+    // These skipped positions seem to be often zeros, so we fill them with zeros.
     for (const date in sortedJsonResult) {
       const filledPricePoints = [];
       for (let i = 1; i <= totalPositions; i++) {
@@ -73,7 +76,7 @@ const parseXMLtoObject = (text) => {
       filledPricePointsByDate[date] = filledPricePoints;
     }
 
-    shiftPrices(filledPricePointsByDate);
+    shiftPrices(filledPricePointsByDate); // Shift the prices
     console.log("this is shifted data", filledPricePointsByDate);
 
     // Now call the shift and pair functions in the correct order
@@ -85,6 +88,9 @@ const parseXMLtoObject = (text) => {
   return finalData;
 };
 
+// We shift the prices to the left by one position to match the correct time slots
+// this way we move the last price of the previous day to the first position of the current day
+// for example, the price at 00:00 is now for the 00:00-01:00 time slot
 function shiftPrices(data) {
   let lastPriceOfPreviousDay = 0;
 
@@ -100,6 +106,8 @@ function shiftPrices(data) {
   });
 }
 
+// Creates two arrays, one for today's prices and one for tomorrow's prices
+// The prices are paired with the correct time slots (hours)
 const pairPricesWithDate = (data) => {
   let todaysPrices = [];
   let tomorrowsPrices = [];
