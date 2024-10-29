@@ -50,6 +50,23 @@ cron.schedule(
   }
 );
 
+cron.schedule(
+  "*/15 * * * *",
+  () => {
+    const cachedData = dataCache.get("priceData");
+    
+    // Check if cache exists and if tomorrowsPrices array is empty
+    if (!cachedData || (cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length === 0)) {
+      console.log("Attempting to fetch data again");
+      fetchData();
+    }
+  },
+  {
+    scheduled: true,
+    timezone: "Europe/Helsinki", // Set the timezone for the schedule
+  }
+);
+
 // API endpoint, if data is not in cache, fetch it
 app.get("/api", async (req, res) => {
   const cachedData = dataCache.get("priceData");
