@@ -10,6 +10,7 @@ let finalData = [];
 // Function to parse XML to Object for better manipulation
 const parseXMLtoObject = (rawXml) => {
   const xmlData = rawXml;
+  //console.log(xmlData);
 
   xml2js.parseString(xmlData, { explicitArray: false }, (err, result) => {
     if (err) {
@@ -76,8 +77,15 @@ const parseXMLtoObject = (rawXml) => {
       filledPricePointsByDate[date] = filledPricePoints;
     }
 
-    shiftPrices(filledPricePointsByDate); // Shift the prices
-    console.log("this is shifted data", filledPricePointsByDate);
+    // If in summer time, shift the prices by one position to the left
+    if (isDaylightSavingTimeHelsinki()) {
+      shiftPrices(filledPricePointsByDate); // Shift the prices
+      console.log("this is shifted data", filledPricePointsByDate);
+    } else {
+      console.log("unshifted: ", filledPricePointsByDate)
+    }
+
+    
 
     // Now call the shift and pair functions in the correct order
     finalData = pairPricesWithDate(filledPricePointsByDate);
@@ -94,6 +102,7 @@ const parseXMLtoObject = (rawXml) => {
 function shiftPrices(data) {
   let lastPriceOfPreviousDay = 0;
 
+
   Object.keys(data).forEach((date) => {
     const prices = data[date].map((item) => item.price);
     prices.unshift(lastPriceOfPreviousDay);
@@ -106,14 +115,23 @@ function shiftPrices(data) {
   });
 }
 
+// Check if daylight saving time is active in Helsinki. 
+function isDaylightSavingTimeHelsinki() {
+  const jan = new Date(`January 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone });
+  const jul = new Date(`July 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone});
+  
+  const janOffset = new Date(jan).getTimezoneOffset();
+  const julOffset = new Date(jul).getTimezoneOffset();
+  const isDST = janOffset !== julOffset && new Date().getTimezoneOffset() === Math.min(janOffset, julOffset);
+
+  return isDST ? true : false;
+}
+
 // Creates two arrays, one for today's prices and one for tomorrow's prices
 // The prices are paired with the correct time slots (hours)
 const pairPricesWithDate = (data) => {
   let todaysPrices = [];
   let tomorrowsPrices = [];
-
-  // Define the Helsinki timezone
-  const timeZone = "Europe/Helsinki";
 
   // Get the start of today's date at 00:00 in Helsinki time
   const startOfToday = moment.tz(timeZone).startOf("day").add(3, "hours");
