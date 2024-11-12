@@ -54,6 +54,7 @@ const parseXMLtoObject = (rawXml) => {
 
     // Create a new object to hold filled price points for each date
     const filledPricePointsByDate = {};
+    let lastprice = 0.0;
 
     // Fill missing positions with default price 0 for each date.
     // Sometimes, if there are consecutive 0 prices, it skips the position in the xml.
@@ -66,6 +67,8 @@ const parseXMLtoObject = (rawXml) => {
           (point) => point.position === positionStr
         );
 
+
+
         // If point exists, use its price; otherwise, use the default price of 0
         filledPricePoints.push({
           position: positionStr,
@@ -77,16 +80,6 @@ const parseXMLtoObject = (rawXml) => {
       filledPricePointsByDate[date] = filledPricePoints;
     }
 
-    // If in summer time, shift the prices by one position to the left
-    if (isDaylightSavingTimeHelsinki()) {
-      shiftPrices(filledPricePointsByDate); // Shift the prices
-      console.log("this is shifted data", filledPricePointsByDate);
-    } else {
-      console.log("unshifted: ", filledPricePointsByDate)
-    }
-
-    
-
     // Now call the shift and pair functions in the correct order
     finalData = pairPricesWithDate(filledPricePointsByDate);
 
@@ -96,30 +89,12 @@ const parseXMLtoObject = (rawXml) => {
   return finalData;
 };
 
-// We shift the prices to the left by one position to match the correct time slots
-// this way we move the last price of the previous day to the first position of the current day
-// for example, the price at 00:00 is now for the 00:00-01:00 time slot
-function shiftPrices(data) {
-  let lastPriceOfPreviousDay = 0;
-
-
-  Object.keys(data).forEach((date) => {
-    const prices = data[date].map((item) => item.price);
-    prices.unshift(lastPriceOfPreviousDay);
-    lastPriceOfPreviousDay = prices.pop();
-
-    data[date] = data[date].map((item, index) => ({
-      position: item.position,
-      price: prices[index],
-    }));
-  });
-}
 
 // Check if daylight saving time is active in Helsinki. 
 function isDaylightSavingTimeHelsinki() {
   const jan = new Date(`January 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone });
-  const jul = new Date(`July 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone});
-  
+  const jul = new Date(`July 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone });
+
   const janOffset = new Date(jan).getTimezoneOffset();
   const julOffset = new Date(jul).getTimezoneOffset();
   const isDST = janOffset !== julOffset && new Date().getTimezoneOffset() === Math.min(janOffset, julOffset);
@@ -133,8 +108,10 @@ const pairPricesWithDate = (data) => {
   let todaysPrices = [];
   let tomorrowsPrices = [];
 
+  const shift = isDaylightSavingTimeHelsinki() ? 3 : 2;
+
   // Get the start of today's date at 00:00 in Helsinki time
-  const startOfToday = moment.tz(timeZone).startOf("day").add(3, "hours");
+  const startOfToday = moment.tz(timeZone).startOf("day").add(shift, "hours");
   console.log("start of today", startOfToday);
 
   // Get the start of tomorrow's date at 00:00 in Helsinki time
@@ -142,7 +119,7 @@ const pairPricesWithDate = (data) => {
     .tz(timeZone)
     .startOf("day")
     .add(1, "days")
-    .add(3, "hours");
+    .add(shift, "hours");
 
   // Process each date in the data object
   Object.keys(data).forEach((dateKey) => {
