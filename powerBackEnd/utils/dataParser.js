@@ -83,8 +83,9 @@ const parseXMLtoObject = (rawXml) => {
     // Now call the shift and pair functions in the correct order
     finalData = pairPricesWithDate(filledPricePointsByDate);
 
-    //console.log(finalData);
   });
+
+
 
   return finalData;
 };
@@ -102,13 +103,87 @@ function isDaylightSavingTimeHelsinki() {
   return isDST ? true : false;
 }
 
+
+// We shift the prices to the left by one position to match the correct time slots
+// this way we move the last price of the previous day to the first position of the current day
+// for example, the price at 00:00 is now for the 00:00-01:00 time slot
+
+
+function shiftPrices(data) {
+
+  let lastPriceOfPreviousDay = 0;
+
+  Object.keys(data).forEach((date) => {
+
+    const prices = data[date].map((item) => item.price);
+
+    prices.unshift(lastPriceOfPreviousDay);
+
+    lastPriceOfPreviousDay = prices.pop();
+
+    data[date] = data[date].map((item, index) => ({
+      position: item.position,
+      price: prices[index],
+    }));
+  });
+}
+
+function isLastSundayOfMarch(date = new Date()) {
+  if (date.getMonth() !== 2) return false; // March is month index 2 in JS (0-based index)
+  if (date.getDay() !== 0) return false; // Sunday is 0 in JS Date API
+
+  const lastDayOfMarch = new Date(date.getFullYear(), 2, 31); // March 31st
+  const lastSunday = lastDayOfMarch.getDate() - lastDayOfMarch.getDay(); // Go back to the last Sunday
+
+  return date.getDate() === lastSunday;
+}
+
+function adjustForDST(prices) {
+  if (!isLastSundayOfMarch(new Date())) return prices; // No changes if not DST transition day
+
+  // Create a new array for modified prices
+  let newPrices = [];
+
+  for (let entry of prices) {
+    let hour = entry.date.getUTCHours();
+
+    if (hour < 3) {
+      newPrices.push(entry); // Keep entries before 03:00 unchanged
+    } else {
+      // Shift entries from 03:00 onwards by +1 hour
+      let newEntry = {
+        date: new Date(entry.date.getTime() + 60 * 60 * 1000), // Add 1 hour
+        price: entry.price
+      };
+      newPrices.push(newEntry);
+    }
+  }
+
+  // Insert the DST entry at 03:00
+  const dstEntry = {
+    date: new Date(Date.UTC(2025, 2, 30, 3, 0, 0)), // 03:00 UTC
+    price: "DST"
+  };
+
+  newPrices.push(dstEntry);
+
+  // Sort to maintain correct order
+  return newPrices.sort((a, b) => a.date - b.date);
+}
+
+
 // Creates two arrays, one for today's prices and one for tomorrow's prices
 // The prices are paired with the correct time slots (hours)
 const pairPricesWithDate = (data) => {
   let todaysPrices = [];
   let tomorrowsPrices = [];
 
+  shiftPrices(data)
+
   const shift = isDaylightSavingTimeHelsinki() ? 3 : 2;
+
+
+
 
   // Get the start of today's date at 00:00 in Helsinki time
   const startOfToday = moment.tz(timeZone).startOf("day").add(shift, "hours");
@@ -143,6 +218,11 @@ const pairPricesWithDate = (data) => {
       }
     });
   });
+
+  if (isLastSundayOfMarch) {
+
+    todaysPrices = adjustForDST(todaysPrices)
+  }
 
   return { todaysPrices, tomorrowsPrices };
 };
