@@ -178,8 +178,8 @@ const pairPricesWithDate = (data) => {
   let todaysPrices = [];
   let tomorrowsPrices = [];
 
-  //const shift = isDaylightSavingTimeHelsinki() ? 3 : 2;
-  const shift = 2
+  const shift = isDaylightSavingTimeHelsinki() ? 3 : 2;
+
 
   // Get the start of today's date at 00:00 in Helsinki time
   const startOfToday = moment.tz(timeZone).startOf("day").add(shift, "hours");
@@ -215,10 +215,7 @@ const pairPricesWithDate = (data) => {
     });
   });
 
-  if (isLastSundayOfMarch) {
 
-    todaysPrices = adjustForDST(todaysPrices)
-  }
 
   return { todaysPrices, tomorrowsPrices };
 };
