@@ -49,6 +49,8 @@ const parseXMLtoObject = (rawXml) => {
       sortedJsonResult[date] = jsonResult[date];
     });
 
+    console.log(sortedJsonResult)
+
     // Total number of expected positions (hours) in the data
     const totalPositions = 24;
 
@@ -74,11 +76,17 @@ const parseXMLtoObject = (rawXml) => {
           position: positionStr,
           price: existingPoint
             ? parseFloat(((existingPoint.price * 1.255) / 10).toFixed(2))
-            : 0.0, // Ensure price is a float
+            : lastprice, // Ensure price is a float
         });
+
+        lastprice = existingPoint
+          ? parseFloat(((existingPoint.price * 1.255) / 10).toFixed(2))
+          : lastprice;
       }
       filledPricePointsByDate[date] = filledPricePoints;
     }
+
+    console.log(filledPricePointsByDate)
 
     // Now call the shift and pair functions in the correct order
     finalData = pairPricesWithDate(filledPricePointsByDate);
