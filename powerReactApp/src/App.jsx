@@ -37,10 +37,14 @@ const App = () => {
     const fetchAndSetData = async () => {
       const data = await fetchData();
       const todaysData = data.todaysPrices;
-      const tomorrowsData = data.tomorrowsPrices;
 
       setTodaysPrices(todaysData);
-      setTomorrowsPrices(tomorrowsData);
+
+      if (data.tomorrowsPrices.length > 6) {
+        const tomorrowsData = data.tomorrowsPrices;
+        setTomorrowsPrices(tomorrowsData);
+      }
+
       setDataToDisplay(todaysData);
     };
 
