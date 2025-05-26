@@ -40,7 +40,7 @@ const fetchData = async () => {
 fetchData();
 
 cron.schedule(
-  "0 0,14 * * *",
+  "0 0,14 * * *", // Every day at 14:00
   () => {
     fetchData();
   },
@@ -51,19 +51,24 @@ cron.schedule(
 );
 
 cron.schedule(
-  "*/15 * * * *",
+  "0 0 * * *", // Every day at 00:00
   () => {
     const cachedData = dataCache.get("priceData");
 
-    // Check if cache exists and if tomorrowsPrices array is empty
-    if (!cachedData || (cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length === 0)) {
-      console.log("Attempting to fetch data again");
-      fetchData();
+    if (cachedData && cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length > 0) {
+      console.log("00:00 — Moving tomorrow's prices to today's and clearing tomorrow's data");
+
+      cachedData.todaysPrices = [...cachedData.tomorrowsPrices];
+      cachedData.tomorrowsPrices = [];
+
+      dataCache.set("priceData", cachedData);
+    } else {
+      console.log("00:00 — No tomorrow's prices available to move");
     }
   },
   {
     scheduled: true,
-    timezone: "Europe/Helsinki", // Set the timezone for the schedule
+    timezone: "Europe/Helsinki",
   }
 );
 
