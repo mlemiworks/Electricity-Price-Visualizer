@@ -10,7 +10,7 @@ let finalData = [];
 // Function to parse XML to Object for better manipulation
 const parseXMLtoObject = (rawXml) => {
   const xmlData = rawXml;
-  //console.log(xmlData);
+  console.log(xmlData);
 
   xml2js.parseString(xmlData, { explicitArray: false }, (err, result) => {
     if (err) {
