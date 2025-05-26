@@ -187,7 +187,7 @@ const pairPricesWithDate = (data) => {
   let tomorrowsPrices = [];
 
   //const shift = isDaylightSavingTimeHelsinki() ? 3 : 2;
-  const shift = 3;
+  const shift = 2;
 
 
   // Get the start of today's date at 00:00 in Helsinki time
