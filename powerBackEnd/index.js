@@ -54,7 +54,7 @@ cron.schedule(
   "*/15 * * * *",
   () => {
     const cachedData = dataCache.get("priceData");
-    
+
     // Check if cache exists and if tomorrowsPrices array is empty
     if (!cachedData || (cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length === 0)) {
       console.log("Attempting to fetch data again");
