@@ -1,234 +1,161 @@
-const moment = require("moment-timezone"); // Importing moment-timezone
-const xml2js = require("xml2js");
+const xml2js = require('xml2js');
+const moment = require('moment-timezone');
 
-//Timezone has to be set to Helsinki, because the prices are in Helsinki timezone.
+const fillMissingPricePoints = (timeSeriesData) => {
+  const expectedPoints = 96;
 
-// Timezone for Helsinki
-const timeZone = "Europe/Helsinki";
-let finalData = [];
+  for (let i = 0; i < timeSeriesData.length; i++) {
+    const period = timeSeriesData[i].Period[0];
+    const existingPoints = period.Point;
 
-// Function to parse XML to Object for better manipulation
-const parseXMLtoObject = (rawXml) => {
-  const xmlData = rawXml;
-  console.log(xmlData);
-
-  xml2js.parseString(xmlData, { explicitArray: false }, (err, result) => {
-    if (err) {
-      console.error(err);
-      return;
+    // Create a map of existing positions to their values
+    const pointMap = {};
+    for (let p of existingPoints) {
+      pointMap[parseInt(p.position)] = p["price.amount"][0];
     }
 
-    const timeSeries = result["Publication_MarketDocument"]["TimeSeries"];
-    const jsonResult = {};
+    const filledPoints = [];
+    let lastKnownValue = null;
 
-    timeSeries.forEach((series) => {
-      const period = series["Period"]["timeInterval"];
-      const start = period["start"];
-      const pricePoints = series["Period"]["Point"].map((point) => ({
-        position: point.position,
-        price: parseFloat(point["price.amount"]), // Ensure price is a float here
-      }));
-
-      // Initialize the date entry if it doesn't exist
-      if (!jsonResult[start]) {
-        jsonResult[start] = [];
-      }
-
-      jsonResult[start].push(...pricePoints);
-    });
-
-    // Convert keys to an array, sort the dates, and build a new object
-    const sortedDates = Object.keys(jsonResult).sort(
-      (a, b) => new Date(a) - new Date(b)
-    );
-
-    // Create a new sorted object.
-    // Sometimes the dates in data are not in order, so we need to sort it.
-    const sortedJsonResult = {};
-    sortedDates.forEach((date) => {
-      sortedJsonResult[date] = jsonResult[date];
-    });
-
-    console.log(sortedJsonResult)
-
-    // Total number of expected positions (hours) in the data
-    const totalPositions = 24;
-
-    // Create a new object to hold filled price points for each date
-    const filledPricePointsByDate = {};
-    let lastprice = 0.0;
-
-    // Fill missing positions with default price 0 for each date.
-    // Sometimes, if there are consecutive 0 prices, it skips the position in the xml.
-    // These skipped positions seem to be often zeros, so we fill them with zeros.
-    for (const date in sortedJsonResult) {
-      const filledPricePoints = [];
-      for (let i = 1; i <= totalPositions; i++) {
-        const positionStr = i.toString();
-        const existingPoint = sortedJsonResult[date].find(
-          (point) => point.position === positionStr
-        );
-
-
-
-        // If point exists, use its price; otherwise, use the default price of 0
-        filledPricePoints.push({
-          position: positionStr,
-          price: existingPoint
-            ? parseFloat(((existingPoint.price * 1.255) / 10).toFixed(2))
-            : lastprice, // Ensure price is a float
+    for (let pos = 1; pos <= expectedPoints; pos++) {
+      if (pointMap[pos] !== undefined) {
+        // Existing value
+        lastKnownValue = pointMap[pos];
+        filledPoints.push({
+          position: pos,
+          "price.amount": [lastKnownValue]
         });
-
-        lastprice = existingPoint
-          ? parseFloat(((existingPoint.price * 1.255) / 10).toFixed(2))
-          : lastprice;
+      } else if (lastKnownValue !== null) {
+        // Fill missing position with last known value
+        filledPoints.push({
+          position: pos,
+          "price.amount": [lastKnownValue]
+        });
+      } else {
+        // No known value yet? Skip or handle error.
+        // You can default to "0" or throw error
+        filledPoints.push({
+          position: pos,
+          "price.amount": ["0.00"]
+        });
       }
-      filledPricePointsByDate[date] = filledPricePoints;
     }
 
-    console.log(filledPricePointsByDate)
+    // Overwrite the original Point array
+    period.Point = filledPoints;
+  }
 
-    // Now call the shift and pair functions in the correct order
-    finalData = pairPricesWithDate(filledPricePointsByDate);
-
-  });
-
-
-
-  return finalData;
+  return timeSeriesData;
 };
 
+const convertToDataPoints = (timeSeriesDataRaw, startDate) => {
+  let dataPoints = [];
+  let date = new Date(startDate); // This will be incremented
 
-// Check if daylight saving time is active in Helsinki. 
-function isDaylightSavingTimeHelsinki() {
-  const jan = new Date(`January 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone });
-  const jul = new Date(`July 1 ${new Date().getFullYear()} 00:00:00`).toLocaleString("en-US", { timeZone });
+  const timeSeriesData = fillMissingPricePoints(timeSeriesDataRaw)
 
-  const janOffset = new Date(jan).getTimezoneOffset();
-  const julOffset = new Date(jul).getTimezoneOffset();
-  const isDST = janOffset !== julOffset && new Date().getTimezoneOffset() === Math.min(janOffset, julOffset);
+  for (let i = 0; i < timeSeriesData.length; i++) {
+    const periodPoints = timeSeriesData[i].Period[0].Point;
+    for (let j = 0; j < periodPoints.length; j++) {
+      const pricePerMwh = parseFloat(periodPoints[j]["price.amount"][0]) * 1.255;
+      const pricePerKwh = pricePerMwh / 10;
+      const finalPrice = Math.round(pricePerKwh * 100) / 100;
 
-  return isDST ? true : false;
-}
-
-
-// We shift the prices to the left by one position to match the correct time slots
-// this way we move the last price of the previous day to the first position of the current day
-// for example, the price at 00:00 is now for the 00:00-01:00 time slot
-
-
-function shiftPrices(data) {
-
-  let lastPriceOfPreviousDay = 0;
-
-  Object.keys(data).forEach((date) => {
-
-    const prices = data[date].map((item) => item.price);
-
-    prices.unshift(lastPriceOfPreviousDay);
-
-    lastPriceOfPreviousDay = prices.pop();
-
-    data[date] = data[date].map((item, index) => ({
-      position: item.position,
-      price: prices[index],
-    }));
-  });
-}
-
-function isLastSundayOfMarch(date = new Date()) {
-  if (date.getMonth() !== 2) return false; // March is month index 2 in JS (0-based index)
-  if (date.getDay() !== 0) return false; // Sunday is 0 in JS Date API
-
-  const lastDayOfMarch = new Date(date.getFullYear(), 2, 31); // March 31st
-  const lastSunday = lastDayOfMarch.getDate() - lastDayOfMarch.getDay(); // Go back to the last Sunday
-
-  return date.getDate() === lastSunday;
-}
-
-function adjustForDST(prices) {
-  if (!isLastSundayOfMarch(new Date())) return prices; // No changes if not DST transition day
-
-  // Create a new array for modified prices
-  let newPrices = [];
-
-  for (let entry of prices) {
-    let hour = entry.date.getUTCHours();
-
-    if (hour < 3) {
-      newPrices.push(entry); // Keep entries before 03:00 unchanged
-    } else {
-      // Shift entries from 03:00 onwards by +1 hour
-      let newEntry = {
-        date: new Date(entry.date.getTime() + 60 * 60 * 1000), // Add 1 hour
-        price: entry.price
+      const dataPoint = {
+        ts: date.toISOString(),
+        price: finalPrice
       };
-      newPrices.push(newEntry);
+
+
+      dataPoints.push(dataPoint);
+
+      date.setMinutes(date.getMinutes() + 15);
     }
   }
 
-  // Insert the DST entry at 03:00
-  const dstEntry = {
-    date: new Date(Date.UTC(2025, 2, 30, 3, 0, 0)), // 03:00 UTC
-    price: "DST"
-  };
+  return dataPoints;
+}
 
-  newPrices.push(dstEntry);
+const calculateHourlyRates = (dataPoints) => {
 
-  // Sort to maintain correct order
-  return newPrices.sort((a, b) => a.date - b.date);
+  let hourlyRate = []
+
+  for (let i = 0; i <= dataPoints.length - 4; i += 4) {
+    let average = (
+      parseFloat(dataPoints[i]["price"]) +
+      parseFloat(dataPoints[i + 1]["price"]) +
+      parseFloat(dataPoints[i + 2]["price"]) +
+      parseFloat(dataPoints[i + 3]["price"])) / 4;
+
+    const dataPoint = {
+      ts: dataPoints[i]["ts"],
+      price: Math.round(average * 100) / 100
+    }
+
+    hourlyRate.push(dataPoint)
+  }
+
+  return hourlyRate;
 }
 
 
-// Creates two arrays, one for today's prices and one for tomorrow's prices
-// The prices are paired with the correct time slots (hours)
-const pairPricesWithDate = (data) => {
-  let todaysPrices = [];
-  let tomorrowsPrices = [];
+const setStartDateToToday = (dataPoints) => {
+  // Get today’s midnight in Helsinki local time
+  const helsinkiMidnight = moment.tz("Europe/Helsinki").startOf('day');
 
-  //const shift = isDaylightSavingTimeHelsinki() ? 3 : 2;
-  const shift = 2;
+  // Convert to a regular Date object in UTC
+  const utcMidnight = helsinkiMidnight.toDate();
+
+  // Filter all data points from that UTC timestamp onward
+  return dataPoints.filter(p => new Date(p.ts) >= utcMidnight);
+};
 
 
-  // Get the start of today's date at 00:00 in Helsinki time
-  const startOfToday = moment.tz(timeZone).startOf("day").add(shift, "hours");
-  console.log("start of today", startOfToday);
+const parseData = async (rawXml) => {
+  const parsedXml = await xml2js.parseStringPromise(rawXml);
 
-  // Get the start of tomorrow's date at 00:00 in Helsinki time
-  const startOfTomorrow = moment
-    .tz(timeZone)
-    .startOf("day")
-    .add(1, "days")
-    .add(shift, "hours");
+  const timeSeriesStart = parsedXml.Publication_MarketDocument.TimeSeries[0].Period[0].timeInterval[0].start
+  const timeSeriesData = parsedXml.Publication_MarketDocument.TimeSeries
 
-  // Process each date in the data object
-  Object.keys(data).forEach((dateKey) => {
-    // Parse the base date key and add two hours in Helsinki time
-    const baseDate = moment.tz(dateKey, timeZone).add(2, "hours");
+  let dataPointsQuarterly = []
+  let dataPointsHourly = []
 
-    // Pair prices with time slots (hours) based on the base date
-    const pairedData = data[dateKey].map((item, index) => {
-      const date = baseDate.clone().add(index, "hours");
-      return { date: date.toDate(), price: item.price };
-    });
+  let date = new Date(timeSeriesStart)
+  let hours = 0
 
-    // Separate today's and tomorrow's prices based on the Helsinki time zone
-    pairedData.forEach((item) => {
-      const itemDate = moment(item.date);
+  const tempDataPoints = convertToDataPoints(timeSeriesData, timeSeriesStart)
 
-      if (itemDate.isBetween(startOfToday, startOfTomorrow, null, "[)")) {
-        todaysPrices.push(item);
-      } else if (itemDate.isSameOrAfter(startOfTomorrow)) {
-        tomorrowsPrices.push(item);
-      }
-    });
+  dataPointsQuarterly = setStartDateToToday(tempDataPoints)
+  dataPointsHourly = calculateHourlyRates(dataPointsQuarterly)
+
+  const fmt = new Intl.DateTimeFormat("fi-FI", {
+    timeZone: "Europe/Helsinki",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
+
+  function formatArray(arr) {
+    return arr.map(p => {
+      const d = new Date(p.ts);
+      return {
+        ts: fmt.format(d),
+        price: p.price
+      };
+    });
+  }
+
+
+
+  let todaysPrices = dataPointsHourly.slice(0, 24)
+  let tomorrowsPrices = dataPointsHourly.length >= 47 ? dataPointsHourly.slice(24, 48) : []
 
 
 
   return { todaysPrices, tomorrowsPrices };
-};
 
-module.exports = {
-  parseXMLtoObject,
-};
+}
+
+module.exports = { parseData };

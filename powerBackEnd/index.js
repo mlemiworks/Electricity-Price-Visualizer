@@ -6,7 +6,7 @@ const cron = require("node-cron");
 const moment = require("moment-timezone");
 const NodeCache = require("node-cache");
 const { formatDatesForApi } = require("./utils/dateFormatter");
-const { parseXMLtoObject } = require("./utils/dataParser");
+const { parseData } = require("./utils/dataParser");
 
 const app = express();
 
@@ -28,7 +28,7 @@ const fetchData = async () => {
 
   const response = await fetch(url);
   const xmlData = await response.text(); // Response is XML
-  const parsedData = await parseXMLtoObject(xmlData); // Parse XML to JS object
+  const parsedData = await parseData(xmlData);
 
   console.log("Data fetched and parsed");
   console.log(parsedData);
