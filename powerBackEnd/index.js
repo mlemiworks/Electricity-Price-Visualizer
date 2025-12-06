@@ -6,7 +6,7 @@ const cron = require("node-cron");
 const moment = require("moment-timezone");
 const NodeCache = require("node-cache");
 const { formatDatesForApi } = require("./utils/dateFormatter");
-const { parseXMLtoObject } = require("./utils/dataParser");
+const { parseData } = require("./utils/dataParser");
 
 const app = express();
 
@@ -28,10 +28,9 @@ const fetchData = async () => {
 
   const response = await fetch(url);
   const xmlData = await response.text(); // Response is XML
-  const parsedData = await parseXMLtoObject(xmlData); // Parse XML to JS object
+  const parsedData = await parseData(xmlData); // Parse XML to JS object
 
   console.log("Data fetched and parsed");
-  console.log(parsedData);
 
   dataCache.set("priceData", parsedData);
 };
@@ -54,7 +53,7 @@ cron.schedule(
   "*/15 * * * *",
   () => {
     const cachedData = dataCache.get("priceData");
-    
+
     // Check if cache exists and if tomorrowsPrices array is empty
     if (!cachedData || (cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length === 0)) {
       console.log("Attempting to fetch data again");

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import ClockFace from "./components/clockFace";
+import { useState, useEffect } from 'react';
+import ClockFace from './components/clockFace';
 //import WeatherWidget from "./components/weatherWidget";
-import { fetchData } from "./utils/api";
+import { fetchData } from './utils/api';
 
 // Main component
 // Fetches data from server and passes it to child components
@@ -18,17 +18,17 @@ const App = () => {
   const [dates, setDates] = useState([]);
 
   useEffect(() => {
-    const todaysDate = new Date().toLocaleString("fi-FI", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
+    const todaysDate = new Date().toLocaleString('fi-FI', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
     });
     const tomorrowsDate = new Date(
       new Date().getTime() + 24 * 60 * 60 * 1000
-    ).toLocaleString("fi-FI", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
+    ).toLocaleString('fi-FI', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
     });
     setDates([todaysDate, tomorrowsDate]);
   }, []);
@@ -71,14 +71,14 @@ const App = () => {
     <div className="container">
       <div className="header">
         <div className="header-item left">
-          {" "}
+          {' '}
           {/* <WeatherWidget data={dataToDisplay} /> */}
         </div>
 
         <div className="header-item mid">
           <div className="daySelector">
             <h1 className="title">
-              {showTomorrow ? "Sähkö huomenna" : "Sähkö tänään"}
+              {showTomorrow ? 'Sähkö huomenna' : 'Sähkö tänään'}
             </h1>
           </div>
         </div>
@@ -90,7 +90,7 @@ const App = () => {
             disabled={dayButtonDisabled}
             onClick={() => setShowTomorrow(!showTomorrow)}
           >
-            {showTomorrow ? "Hinta tänään" : "Huomisen hinnat"}
+            {showTomorrow ? 'Hinta tänään' : 'Huomisen hinnat'}
           </button>
           <p className="buttonInfo">Huomisen hinnat päivittyvät noin klo 14</p>
         </div>
