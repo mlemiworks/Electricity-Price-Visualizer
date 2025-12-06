@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 // Alternative color scale
 // const colorScale = [
@@ -17,18 +17,18 @@ import { useEffect, useState } from "react";
 // ];
 
 const colorScale = [
-  "rgba(30, 127, 53, 1)", // Dark Green
-  "rgba(100, 168, 100, 0.9)", // Dark Lime Green
-  "rgba(145, 170, 145, 0.9)", // Muted Light Green
-  "rgba(190, 175, 115, 0.9)", // Dark Pale Yellow
-  "rgba(180, 170, 110, 0.9)", // Dark Beige
-  "rgba(150, 150, 150, 0.9)", // Dark Light Gray
-  "rgba(180, 140, 140, 0.9)", // Dark Light Pink
-  "rgba(200, 135, 50, 0.9)", // Dark Orange
-  "rgba(200, 150, 5, 0.9)", // Dark Amber
-  "rgba(190, 80, 50, 0.9)", // Dark Coral Red
-  "rgba(170, 40, 50, 0.9)", // Dark Red
-  "rgba(120, 35, 30, 0.9)", // Deep Dark Red
+  'rgba(30, 127, 53, 1)', // Dark Green
+  'rgba(100, 168, 100, 0.9)', // Dark Lime Green
+  'rgba(145, 170, 145, 0.9)', // Muted Light Green
+  'rgba(190, 175, 115, 0.9)', // Dark Pale Yellow
+  'rgba(180, 170, 110, 0.9)', // Dark Beige
+  'rgba(150, 150, 150, 0.9)', // Dark Light Gray
+  'rgba(180, 140, 140, 0.9)', // Dark Light Pink
+  'rgba(200, 135, 50, 0.9)', // Dark Orange
+  'rgba(200, 150, 5, 0.9)', // Dark Amber
+  'rgba(190, 80, 50, 0.9)', // Dark Coral Red
+  'rgba(170, 40, 50, 0.9)', // Dark Red
+  'rgba(120, 35, 30, 0.9)', // Deep Dark Red
 ];
 
 const ClockFace = ({ data }) => {
@@ -61,10 +61,10 @@ const ClockFace = ({ data }) => {
   const assignColorToPrice = () => {
     const prices = data.map((hour) => hour.price);
     const minPrice = Math.min(
-      ...prices.filter((price) => typeof price === "number")
+      ...prices.filter((price) => typeof price === 'number')
     );
     const maxPrice = Math.max(
-      ...prices.filter((price) => typeof price === "number")
+      ...prices.filter((price) => typeof price === 'number')
     );
 
     const coloredPrices = prices.map((price) => ({
@@ -89,8 +89,8 @@ const ClockFace = ({ data }) => {
 
   // Generates the numbers around the clock face for each clock, the AM and PM clock.
   const generateTimeDigits = () => {
-    const clocks = document.querySelectorAll(".clock");
-    const clockDigits = document.querySelectorAll(".clockDigits");
+    const clocks = document.querySelectorAll('.clock');
+    const clockDigits = document.querySelectorAll('.clockDigits');
 
     // counter for the clockDigits, matching the clock index, might be a better way to do this
     let indexCounter = 0;
@@ -117,11 +117,18 @@ const ClockFace = ({ data }) => {
           const y = radius + numberRadius * Math.sin(angleInRadians);
 
           // Create the number element
-          const numberElement = document.createElement("div");
-          numberElement.className = "number";
+          const numberElement = document.createElement('div');
+          numberElement.className = 'number';
           numberElement.style.left = `${x}px`;
           numberElement.style.top = `${y}px`;
           numberElement.textContent = i;
+
+          // Instead of 24 we want it to dislpay 12
+          if (i === 24) {
+            numberElement.textContent = '12';
+          } else {
+            numberElement.textContent = i;
+          }
 
           // Add the number to the clock using the indexCounter
           clockDigits[indexCounter].appendChild(numberElement);
@@ -137,11 +144,17 @@ const ClockFace = ({ data }) => {
           const y = radius + numberRadius * Math.sin(angleInRadians);
 
           // Create the number element
-          const numberElement = document.createElement("div");
-          numberElement.className = "number";
+          const numberElement = document.createElement('div');
+          numberElement.className = 'number';
           numberElement.style.left = `${x}px`;
           numberElement.style.top = `${y}px`;
-          numberElement.textContent = i;
+
+          // Instead of 12 we want it to display 00
+          if (i === 12) {
+            numberElement.textContent = '00';
+          } else {
+            numberElement.textContent = i;
+          }
 
           // Add the number to the clock using the indexCounter
           clockDigits[indexCounter].appendChild(numberElement);
@@ -165,7 +178,7 @@ const ClockFace = ({ data }) => {
               className="sector"
               style={{
                 /* Set the background color of the sector based on the price */
-                backgroundColor: coloredAmPrices[index]?.color || "transparent",
+                backgroundColor: coloredAmPrices[index]?.color || 'transparent',
               }}
             >
               {/* priceWrapper for if we want to edit how price looks */}
@@ -189,7 +202,7 @@ const ClockFace = ({ data }) => {
               key={index}
               className="sector"
               style={{
-                backgroundColor: coloredPmPrices[index]?.color || "transparent",
+                backgroundColor: coloredPmPrices[index]?.color || 'transparent',
               }}
             >
               <div className="price-wrapper">
