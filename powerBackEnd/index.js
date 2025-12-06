@@ -28,10 +28,9 @@ const fetchData = async () => {
 
   const response = await fetch(url);
   const xmlData = await response.text(); // Response is XML
-  const parsedData = await parseData(xmlData);
+  const parsedData = await parseData(xmlData); // Parse XML to JS object
 
   console.log("Data fetched and parsed");
-  console.log(parsedData);
 
   dataCache.set("priceData", parsedData);
 };
@@ -55,15 +54,10 @@ cron.schedule(
   () => {
     const cachedData = dataCache.get("priceData");
 
-    if (cachedData && cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length > 0) {
-      console.log("00:00 — Moving tomorrow's prices to today's and clearing tomorrow's data");
-
-      cachedData.todaysPrices = [...cachedData.tomorrowsPrices];
-      cachedData.tomorrowsPrices = [];
-
-      dataCache.set("priceData", cachedData);
-    } else {
-      console.log("00:00 — No tomorrow's prices available to move");
+    // Check if cache exists and if tomorrowsPrices array is empty
+    if (!cachedData || (cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length === 0)) {
+      console.log("Attempting to fetch data again");
+      fetchData();
     }
   },
   {

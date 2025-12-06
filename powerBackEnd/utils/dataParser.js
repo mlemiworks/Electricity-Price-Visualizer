@@ -120,9 +120,6 @@ const parseData = async (rawXml) => {
   let dataPointsQuarterly = []
   let dataPointsHourly = []
 
-  let date = new Date(timeSeriesStart)
-  let hours = 0
-
   const tempDataPoints = convertToDataPoints(timeSeriesData, timeSeriesStart)
 
   dataPointsQuarterly = setStartDateToToday(tempDataPoints)
@@ -147,12 +144,8 @@ const parseData = async (rawXml) => {
     });
   }
 
-
-
-  let todaysPrices = dataPointsHourly.slice(0, 24)
-  let tomorrowsPrices = dataPointsHourly.length >= 47 ? dataPointsHourly.slice(24, 48) : []
-
-
+  let todaysPrices = formatArray(dataPointsHourly.slice(0, 24))
+  let tomorrowsPrices = dataPointsHourly.length >= 47 ? formatArray(dataPointsHourly.slice(24, 48)) : []
 
   return { todaysPrices, tomorrowsPrices };
 
