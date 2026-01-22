@@ -30,7 +30,10 @@ const fetchData = async () => {
   const xmlData = await response.text(); // Response is XML
   const parsedData = await parseData(xmlData); // Parse XML to JS object
 
+
+
   console.log("Data fetched and parsed");
+  console.log(parsedData);
 
   dataCache.set("priceData", parsedData);
 };
@@ -39,7 +42,8 @@ const fetchData = async () => {
 fetchData();
 
 cron.schedule(
-  "0 0,14 * * *", // Every day at 14:00
+  // Every day at 14:15, as new data is usually available by then
+  "15 14 * * *",
   () => {
     fetchData();
   },
