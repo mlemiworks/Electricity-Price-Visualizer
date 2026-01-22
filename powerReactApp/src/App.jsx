@@ -24,7 +24,7 @@ const App = () => {
       day: 'numeric',
     });
     const tomorrowsDate = new Date(
-      new Date().getTime() + 24 * 60 * 60 * 1000
+      new Date().getTime() + 24 * 60 * 60 * 1000,
     ).toLocaleString('fi-FI', {
       weekday: 'long',
       month: 'long',
@@ -79,6 +79,10 @@ const App = () => {
           <div className="daySelector">
             <h1 className="title">
               {showTomorrow ? 'Sähkö huomenna' : 'Sähkö tänään'}
+              <p className="buttonInfo">
+                Tuntikohtainen hinta laskettu kunkin tunnin varttihintojen
+                keskiarvosta.
+              </p>
             </h1>
           </div>
         </div>
@@ -92,7 +96,9 @@ const App = () => {
           >
             {showTomorrow ? 'Hinta tänään' : 'Huomisen hinnat'}
           </button>
-          <p className="buttonInfo">Huomisen hinnat päivittyvät noin klo 14</p>
+          <p className="buttonInfo">
+            Huomisen hinnat päivittyvät noin klo 14:15
+          </p>
         </div>
       </div>
 
