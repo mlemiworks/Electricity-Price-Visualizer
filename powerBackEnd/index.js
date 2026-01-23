@@ -53,15 +53,21 @@ cron.schedule(
   }
 );
 
+// Day changes, drop todays data and set tomorrows data to todays
 cron.schedule(
   "0 0 * * *", // Every day at 00:00
   () => {
     const cachedData = dataCache.get("priceData");
-
-    // Check if cache exists and if tomorrowsPrices array is empty
-    if (!cachedData || (cachedData.tomorrowsPrices && cachedData.tomorrowsPrices.length === 0)) {
-      console.log("Attempting to fetch data again");
+    if (!cachedData) {
       fetchData();
+    } else {
+      const shiftedData = {
+        ...cachedData,
+        todaysPrices: cachedData.tomorrowsPrices,
+        tomorrowsPrices: [],
+      };
+      dataCache.set("priceData", shiftedData);
+      console.log("Shifted data for new day");
     }
   },
   {
