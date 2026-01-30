@@ -112,7 +112,7 @@ const App = () => {
           showTomorrow={showTomorrow}
         />
       </div>
-      <div className="footer">© Markus Lemiläinen 2024</div>
+      <div className="footer">© Sähkö tänään {new Date().getFullYear()}</div>
     </div>
   );
 };
