@@ -8,4 +8,4 @@ updates:
   - package-ecosystem: "npm"
     directory: "/powerReactApp"
     schedule:
-      interval: "weekly"
+      interval: "weekly" 
