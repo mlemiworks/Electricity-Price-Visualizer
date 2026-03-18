@@ -3,6 +3,10 @@ name: Dependabot auto merge
 on:
   pull_request:
 
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   automerge:
     if: github.actor == 'dependabot[bot]'
