@@ -1,11 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directory: "/powerBackEnd"
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "npm"
-    directory: "/backend"
+    directory: "/powerReactApp"
     schedule:
       interval: "weekly"
