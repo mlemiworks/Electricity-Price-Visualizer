@@ -1,6 +1,7 @@
 name: Dependabot auto merge
 
-on: pull_request
+on:
+  pull_request:
 
 jobs:
   automerge:
@@ -8,7 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Enable auto merge for patch updates
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Enable auto merge
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           merge-method: squash
