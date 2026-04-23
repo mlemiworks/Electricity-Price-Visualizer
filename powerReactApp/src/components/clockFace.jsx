@@ -52,7 +52,7 @@ const ClockFace = ({ data }) => {
   // WHen data is present, assign colors to the sectors based on the price
   // lower price = greener, higher price = redder
   useEffect(() => {
-    if (data.length > 0) {
+    if (data && data.length > 0) {
       // Check if data is not empty
       assignColorToPrice();
     }
@@ -61,10 +61,10 @@ const ClockFace = ({ data }) => {
   const assignColorToPrice = () => {
     const prices = data.map((hour) => hour.price);
     const minPrice = Math.min(
-      ...prices.filter((price) => typeof price === 'number')
+      ...prices.filter((price) => typeof price === 'number'),
     );
     const maxPrice = Math.max(
-      ...prices.filter((price) => typeof price === 'number')
+      ...prices.filter((price) => typeof price === 'number'),
     );
 
     const coloredPrices = prices.map((price) => ({
@@ -82,7 +82,7 @@ const ClockFace = ({ data }) => {
   const getColorForPrice = (price, minPrice, maxPrice, colorScale) => {
     const range = maxPrice - minPrice;
     const index = Math.floor(
-      ((price - minPrice) / range) * (colorScale.length - 1)
+      ((price - minPrice) / range) * (colorScale.length - 1),
     );
     return colorScale[index];
   };
