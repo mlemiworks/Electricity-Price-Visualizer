@@ -48,6 +48,8 @@ const fillMissingPricePoints = (timeSeriesData) => {
   return timeSeriesData;
 };
 
+
+
 const convertToDataPoints = (timeSeriesDataRaw, startDate) => {
   let dataPoints = [];
   let date = new Date(startDate); // This will be incremented
@@ -99,6 +101,7 @@ const calculateHourlyRates = (dataPoints) => {
 }
 
 
+
 const setStartDateToToday = (dataPoints) => {
   // Get today’s midnight in Helsinki local time
   const helsinkiMidnight = moment.tz("Europe/Helsinki").startOf('day');
@@ -125,30 +128,55 @@ const parseData = async (rawXml) => {
   dataPointsQuarterly = setStartDateToToday(tempDataPoints)
   dataPointsHourly = calculateHourlyRates(dataPointsQuarterly)
 
-  const fmt = new Intl.DateTimeFormat("fi-FI", {
-    timeZone: "Europe/Helsinki",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
   function formatArray(arr) {
     return arr.map(p => {
       const d = new Date(p.ts);
       return {
-        ts: fmt.format(d),
+        ts: d,
         price: p.price
       };
     });
   }
 
-  let todaysPrices = formatArray(dataPointsHourly.slice(0, 24))
-  let tomorrowsPrices = dataPointsHourly.length >= 47 ? formatArray(dataPointsHourly.slice(24, 48)) : []
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
+  const endOfDay = startOfDay + 24 * 60 * 60 * 1000; // start of next day
+
+  const todaysPricesFinal = dataPointsHourly.filter(entry => {
+    const ts = new Date(entry.ts).getTime();
+    return ts >= startOfDay && ts < endOfDay
+  })
+
+  const todaysQuarterlyPricesFinal = dataPointsQuarterly.filter(entry => {
+    const ts = new Date(entry.ts).getTime();
+    return ts >= startOfDay && ts < endOfDay
+  })
+
+  const tomorrowsPricesFinal = dataPointsHourly.filter(entry => {
+    const ts = new Date(entry.ts).getTime();
+    return ts >= endOfDay
+  })
+
+  const tomorrowsQuarterlyPricesFinal = dataPointsQuarterly.filter(entry => {
+    const ts = new Date(entry.ts).getTime();
+    return ts >= endOfDay
+  })
+
+
+  const todaysPrices = {
+    hourly: todaysPricesFinal,
+    quarterly: todaysQuarterlyPricesFinal
+  }
+
+  const tomorrowsPrices = {
+    hourly: tomorrowsPricesFinal,
+    quarterly: tomorrowsQuarterlyPricesFinal
+  }
+
 
   return { todaysPrices, tomorrowsPrices };
 
 }
+
 
 module.exports = { parseData };
