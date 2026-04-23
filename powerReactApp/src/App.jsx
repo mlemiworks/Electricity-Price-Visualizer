@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
-import ClockFace from './components/clockFace';
+import PriceClockface from './components/PriceClockface';
 //import WeatherWidget from "./components/weatherWidget";
 import { fetchData } from './utils/api';
 
-// Main component
-// Fetches data from server and passes it to child components
-// Child components are ClockFace and WeatherWidget
-// ClockFace visualizes the data on a clock face
-// WeatherWidget displays the current weather
 const App = () => {
   const [dataToDisplay, setDataToDisplay] = useState([]);
   const [todaysPrices, setTodaysPrices] = useState([]);
   const [tomorrowsPrices, setTomorrowsPrices] = useState([]);
   const [showTomorrow, setShowTomorrow] = useState(false);
   const [dayButtonDisabled, setDayButtonDisabled] = useState(true);
+  const [now, setNow] = useState(new Date().getHours());
 
   const [dates, setDates] = useState([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date().getHours()), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const todaysDate = new Date().toLocaleString('fi-FI', {
@@ -102,10 +103,10 @@ const App = () => {
         <div className="dateInfo">
           <p>{dates[showTomorrow ? 1 : 0]}</p>
         </div>
-        <ClockFace
-          data={dataToDisplay.hourly}
-          dates={dates}
-          showTomorrow={showTomorrow}
+        <PriceClockface
+          prices={dataToDisplay.hourly?.map(p => p.price) ?? []}
+          quarters={dataToDisplay.quarterly?.map(p => p.price) ?? []}
+          now={now}
         />
       </div>
       <div className="footer">© Sähkö tänään {new Date().getFullYear()}</div>
