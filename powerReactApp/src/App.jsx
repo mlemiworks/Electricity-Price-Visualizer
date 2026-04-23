@@ -37,10 +37,12 @@ const App = () => {
     const fetchAndSetData = async () => {
       const data = await fetchData();
       const todaysData = data.todaysPrices;
+      console.log('Fetched data:', data);
 
       setTodaysPrices(todaysData);
 
-      if (data.tomorrowsPrices.length > 6) {
+      // wont show tomorrow button if there is not enough data
+      if (data.tomorrowsPrices.hourly?.length > 6) {
         const tomorrowsData = data.tomorrowsPrices;
         setTomorrowsPrices(tomorrowsData);
       }
@@ -52,7 +54,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (tomorrowsPrices.length > 1) {
+    if (tomorrowsPrices.hourly?.length > 1) {
       setDayButtonDisabled(false);
     } else {
       setDayButtonDisabled(true);
@@ -79,10 +81,6 @@ const App = () => {
           <div className="daySelector">
             <h1 className="title">
               {showTomorrow ? 'Sähkö huomenna' : 'Sähkö tänään'}
-              <p className="buttonInfo">
-                Tuntikohtainen hinta laskettu kunkin tunnin varttihintojen
-                keskiarvosta.
-              </p>
             </h1>
           </div>
         </div>
@@ -96,9 +94,7 @@ const App = () => {
           >
             {showTomorrow ? 'Hinta tänään' : 'Huomisen hinnat'}
           </button>
-          <p className="buttonInfo">
-            Huomisen hinnat päivittyvät noin klo 14:15
-          </p>
+          <p className="buttonInfo">Huomisen hinnat päivittyvät noin klo 14</p>
         </div>
       </div>
 
@@ -107,7 +103,7 @@ const App = () => {
           <p>{dates[showTomorrow ? 1 : 0]}</p>
         </div>
         <ClockFace
-          data={dataToDisplay}
+          data={dataToDisplay.hourly}
           dates={dates}
           showTomorrow={showTomorrow}
         />
