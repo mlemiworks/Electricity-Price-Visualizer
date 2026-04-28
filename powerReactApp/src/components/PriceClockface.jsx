@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { priceColor, priceNorm, dynamicMax } from '../utils/priceScale';
 
@@ -19,15 +19,19 @@ function barPath(i, t, segments) {
   const a0 = ang(i, segments) + gap;
   const a1 = ang(i + 1, segments) - gap;
   const R = INNER_R + Math.max(0.04, t) * (OUTER_R - INNER_R);
-  const x0i = CX + INNER_R * Math.cos(a0), y0i = CY + INNER_R * Math.sin(a0);
-  const x1i = CX + INNER_R * Math.cos(a1), y1i = CY + INNER_R * Math.sin(a1);
-  const x0o = CX + R * Math.cos(a0),       y0o = CY + R * Math.sin(a0);
-  const x1o = CX + R * Math.cos(a1),       y1o = CY + R * Math.sin(a1);
+  const x0i = CX + INNER_R * Math.cos(a0),
+    y0i = CY + INNER_R * Math.sin(a0);
+  const x1i = CX + INNER_R * Math.cos(a1),
+    y1i = CY + INNER_R * Math.sin(a1);
+  const x0o = CX + R * Math.cos(a0),
+    y0o = CY + R * Math.sin(a0);
+  const x1o = CX + R * Math.cos(a1),
+    y1o = CY + R * Math.sin(a1);
   return `M ${x0i} ${y0i} L ${x0o} ${y0o} A ${R} ${R} 0 0 1 ${x1o} ${y1o} L ${x1i} ${y1i} A ${INNER_R} ${INNER_R} 0 0 0 ${x0i} ${y0i} Z`;
 }
 
 function guideValues(max) {
-  if (max <= 5)  return [1, 2.5, 4];
+  if (max <= 5) return [1, 2.5, 4];
   if (max <= 10) return [2, 5, 8];
   if (max <= 20) return [5, 10, 15];
   if (max <= 30) return [10, 20, 25];
@@ -45,28 +49,17 @@ const PriceClockface = ({
 }) => {
   const [gran, setGran] = useState(defaultGranularity);
   const [selected, setSelected] = useState(null); // { idx, isQ } | null
-  const timerRef = useRef(null);
 
   const isQ = gran === 'quarterly';
   const segments = isQ ? 96 : 24;
   const data = isQ ? quarters : prices;
   const nowIdx = isQ ? now * 4 : now;
 
-  const handleClick = (i) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setSelected({ idx: i, isQ });
-    timerRef.current = setTimeout(() => setSelected(null), 3000);
-  };
-
-  const handleKeyDown = (e, i) => {
-    if (e.key === 'Enter' || e.key === ' ') handleClick(i);
-  };
-
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  const handleEnter = (i) => setSelected({ idx: i, isQ });
+  const handleLeave = () => setSelected(null);
 
   useEffect(() => {
     setSelected(null);
-    if (timerRef.current) clearTimeout(timerRef.current);
   }, [gran]);
 
   const isSelected = selected && selected.isQ === isQ;
@@ -87,6 +80,7 @@ const PriceClockface = ({
 
   return (
     <div style={styles.frame}>
+      <div style={styles.content}>
       <div style={styles.header}>
         <div style={styles.key}>snt/kWh · 24h bars</div>
         <div style={styles.tabs}>
@@ -113,17 +107,19 @@ const PriceClockface = ({
         style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}
       >
         {/* Guide rings */}
-        {guides.map(v => {
+        {guides.map((v) => {
           const t = priceNorm(v, prices);
           const R = INNER_R + t * (OUTER_R - INNER_R);
           return (
             <g key={v}>
               <circle
-                cx={CX} cy={CY} r={R}
+                cx={CX}
+                cy={CY}
+                r={R}
                 fill="none"
-                stroke="#2a2f30"
-                strokeDasharray="2 4"
-                strokeWidth="1"
+                stroke="#4a5558"
+                strokeDasharray="3 4"
+                strokeWidth="1.5"
               />
               <text x={CX + 4} y={CY - R - 2} style={styles.guideText}>
                 {Number.isInteger(v) ? v : v.toFixed(1)}
@@ -153,8 +149,8 @@ const PriceClockface = ({
               tabIndex={0}
               aria-label={ariaLabel}
               style={{ cursor: 'pointer', transition: 'fill 120ms' }}
-              onClick={() => handleClick(i)}
-              onKeyDown={(e) => handleKeyDown(e, i)}
+              onMouseEnter={() => handleEnter(i)}
+              onMouseLeave={handleLeave}
             />
           );
         })}
@@ -184,26 +180,28 @@ const PriceClockface = ({
         })}
 
         {/* Price labels — hourly only, on bars tall enough to hold text */}
-        {showLabels && !isQ && prices.map((p, h) => {
-          if (p < 1.5) return null;
-          const a = (h / 24) * Math.PI * 2 - Math.PI / 2;
-          const t = priceNorm(p, prices);
-          const R = INNER_R + t * (OUTER_R - INNER_R) - 14;
-          const tx = CX + R * Math.cos(a);
-          const ty = CY + R * Math.sin(a);
-          return (
-            <text
-              key={h}
-              x={tx}
-              y={ty}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              style={styles.priceText}
-            >
-              {p.toFixed(p < 10 ? 1 : 0)}
-            </text>
-          );
-        })}
+        {showLabels &&
+          !isQ &&
+          prices.map((p, h) => {
+            if (p < 1.5) return null;
+            const a = (h / 24) * Math.PI * 2 - Math.PI / 2;
+            const t = priceNorm(p, prices);
+            const R = INNER_R + t * (OUTER_R - INNER_R) - 14;
+            const tx = CX + R * Math.cos(a);
+            const ty = CY + R * Math.sin(a);
+            return (
+              <text
+                key={h}
+                x={tx}
+                y={ty}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={styles.priceText}
+              >
+                {p.toFixed(p < 10 ? 1 : 0)}
+              </text>
+            );
+          })}
 
         {/* Center circle + readout */}
         <circle
@@ -218,7 +216,10 @@ const PriceClockface = ({
           x={CX}
           y={CY - 6}
           textAnchor="middle"
-          style={{ ...styles.centerLabel, fill: isSelected ? SELECTED_RED : styles.centerLabel.fill }}
+          style={{
+            ...styles.centerLabel,
+            fill: isSelected ? SELECTED_RED : styles.centerLabel.fill,
+          }}
         >
           {displayLabel}
         </text>
@@ -226,17 +227,26 @@ const PriceClockface = ({
           x={CX}
           y={CY + 18}
           textAnchor="middle"
-          style={{ ...styles.centerValue, fill: isSelected ? SELECTED_RED : styles.centerValue.fill }}
+          style={{
+            ...styles.centerValue,
+            fill: isSelected ? SELECTED_RED : styles.centerValue.fill,
+          }}
         >
           {typeof displayValue === 'number' ? displayValue.toFixed(2) : '–'}
         </text>
       </svg>
+      </div>
     </div>
   );
 };
 
 const styles = {
   frame: {
+    background: '#314b6162',
+    width: 'fit-content',
+    margin: '0 auto',
+  },
+  content: {
     background: '#232727',
     padding: '24px 40px 32px',
     color: '#dcdcdc',
@@ -284,13 +294,14 @@ const styles = {
   guideText: {
     fontFamily: 'Courier, monospace',
     fontSize: 10,
-    fill: '#5a6164',
+    fill: '#8a9396',
   },
   priceText: {
     fontFamily: 'Courier, monospace',
     fontSize: 11,
     fontWeight: 700,
     fill: 'rgba(10,12,14,0.9)',
+    pointerEvents: 'none',
   },
   centerLabel: {
     fontFamily: 'Courier, monospace',
