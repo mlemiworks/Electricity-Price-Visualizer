@@ -19,21 +19,17 @@ const fillMissingPricePoints = (timeSeriesData) => {
 
     for (let pos = 1; pos <= expectedPoints; pos++) {
       if (pointMap[pos] !== undefined) {
-        // Existing value
         lastKnownValue = pointMap[pos];
         filledPoints.push({
           position: pos,
           "price.amount": [lastKnownValue]
         });
       } else if (lastKnownValue !== null) {
-        // Fill missing position with last known value
         filledPoints.push({
           position: pos,
           "price.amount": [lastKnownValue]
         });
       } else {
-        // No known value yet? Skip or handle error.
-        // You can default to "0" or throw error
         filledPoints.push({
           position: pos,
           "price.amount": ["0.00"]
@@ -41,46 +37,43 @@ const fillMissingPricePoints = (timeSeriesData) => {
       }
     }
 
-    // Overwrite the original Point array
     period.Point = filledPoints;
   }
 
   return timeSeriesData;
 };
 
-
-
-const convertToDataPoints = (timeSeriesDataRaw, startDate) => {
+// Each TimeSeries in the API response can have its own start date.
+// Extract it per-series to avoid wrong timestamps when multiple series are returned.
+const convertToDataPoints = (timeSeriesDataRaw) => {
   let dataPoints = [];
-  let date = new Date(startDate); // This will be incremented
 
-  const timeSeriesData = fillMissingPricePoints(timeSeriesDataRaw)
+  const timeSeriesData = fillMissingPricePoints(timeSeriesDataRaw);
 
   for (let i = 0; i < timeSeriesData.length; i++) {
+    const seriesStart = timeSeriesData[i].Period[0].timeInterval[0].start;
+    let date = new Date(seriesStart);
+
     const periodPoints = timeSeriesData[i].Period[0].Point;
     for (let j = 0; j < periodPoints.length; j++) {
       const pricePerMwh = parseFloat(periodPoints[j]["price.amount"][0]) * 1.255;
       const pricePerKwh = pricePerMwh / 10;
       const finalPrice = Math.round(pricePerKwh * 100) / 100;
 
-      const dataPoint = {
+      dataPoints.push({
         ts: date.toISOString(),
         price: finalPrice
-      };
-
-
-      dataPoints.push(dataPoint);
+      });
 
       date.setMinutes(date.getMinutes() + 15);
     }
   }
 
   return dataPoints;
-}
+};
 
 const calculateHourlyRates = (dataPoints) => {
-
-  let hourlyRate = []
+  let hourlyRate = [];
 
   for (let i = 0; i <= dataPoints.length - 4; i += 4) {
     let average = (
@@ -89,21 +82,17 @@ const calculateHourlyRates = (dataPoints) => {
       parseFloat(dataPoints[i + 2]["price"]) +
       parseFloat(dataPoints[i + 3]["price"])) / 4;
 
-    const dataPoint = {
+    hourlyRate.push({
       ts: dataPoints[i]["ts"],
       price: Math.round(average * 100) / 100
-    }
-
-    hourlyRate.push(dataPoint)
+    });
   }
 
   return hourlyRate;
-}
-
-
+};
 
 const setStartDateToToday = (dataPoints) => {
-  // Get today’s midnight in Helsinki local time
+  // Get today's midnight in Helsinki local time
   const helsinkiMidnight = moment.tz("Europe/Helsinki").startOf('day');
 
   // Convert to a regular Date object in UTC
@@ -113,70 +102,42 @@ const setStartDateToToday = (dataPoints) => {
   return dataPoints.filter(p => new Date(p.ts) >= utcMidnight);
 };
 
-
 const parseData = async (rawXml) => {
   const parsedXml = await xml2js.parseStringPromise(rawXml);
 
-  const timeSeriesStart = parsedXml.Publication_MarketDocument.TimeSeries[0].Period[0].timeInterval[0].start
-  const timeSeriesData = parsedXml.Publication_MarketDocument.TimeSeries
-
-  let dataPointsQuarterly = []
-  let dataPointsHourly = []
-
-  const tempDataPoints = convertToDataPoints(timeSeriesData, timeSeriesStart)
-
-  dataPointsQuarterly = setStartDateToToday(tempDataPoints)
-  dataPointsHourly = calculateHourlyRates(dataPointsQuarterly)
-
-  function formatArray(arr) {
-    return arr.map(p => {
-      const d = new Date(p.ts);
-      return {
-        ts: d,
-        price: p.price
-      };
-    });
+  if (!parsedXml?.Publication_MarketDocument?.TimeSeries) {
+    throw new Error("Unexpected API response: missing Publication_MarketDocument.TimeSeries");
   }
 
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-  const endOfDay = startOfDay + 24 * 60 * 60 * 1000; // start of next day
+  const timeSeriesData = parsedXml.Publication_MarketDocument.TimeSeries;
 
-  const todaysPricesFinal = dataPointsHourly.filter(entry => {
-    const ts = new Date(entry.ts).getTime();
-    return ts >= startOfDay && ts < endOfDay
-  })
+  const tempDataPoints = convertToDataPoints(timeSeriesData);
 
-  const todaysQuarterlyPricesFinal = dataPointsQuarterly.filter(entry => {
-    const ts = new Date(entry.ts).getTime();
-    return ts >= startOfDay && ts < endOfDay
-  })
+  const dataPointsQuarterly = setStartDateToToday(tempDataPoints);
+  const dataPointsHourly = calculateHourlyRates(dataPointsQuarterly);
 
-  const tomorrowsPricesFinal = dataPointsHourly.filter(entry => {
-    const ts = new Date(entry.ts).getTime();
-    return ts >= endOfDay
-  })
-
-  const tomorrowsQuarterlyPricesFinal = dataPointsQuarterly.filter(entry => {
-    const ts = new Date(entry.ts).getTime();
-    return ts >= endOfDay
-  })
-
+  // Use Helsinki time for today/tomorrow boundary to match the cron schedule timezone.
+  // Using system local time would be wrong on a UTC server (off by 2-3 hours).
+  const startOfDay = moment.tz("Europe/Helsinki").startOf("day").valueOf();
+  const endOfDay = moment.tz("Europe/Helsinki").startOf("day").add(1, "day").valueOf();
 
   const todaysPrices = {
-    hourly: todaysPricesFinal,
-    quarterly: todaysQuarterlyPricesFinal
-  }
+    hourly: dataPointsHourly.filter(e => {
+      const ts = new Date(e.ts).getTime();
+      return ts >= startOfDay && ts < endOfDay;
+    }),
+    quarterly: dataPointsQuarterly.filter(e => {
+      const ts = new Date(e.ts).getTime();
+      return ts >= startOfDay && ts < endOfDay;
+    })
+  };
 
   const tomorrowsPrices = {
-    hourly: tomorrowsPricesFinal,
-    quarterly: tomorrowsQuarterlyPricesFinal
-  }
-
+    hourly: dataPointsHourly.filter(e => new Date(e.ts).getTime() >= endOfDay),
+    quarterly: dataPointsQuarterly.filter(e => new Date(e.ts).getTime() >= endOfDay)
+  };
 
   return { todaysPrices, tomorrowsPrices };
-
-}
-
+};
 
 module.exports = { parseData };
