@@ -16,7 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "moment-timezone": "^0.6.1",
+    "moment-timezone": "^0.6.2",
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.3",
     "xml2js": "^0.6.2"
