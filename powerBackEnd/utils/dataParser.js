@@ -132,10 +132,12 @@ const parseData = async (rawXml) => {
     })
   };
 
+  // Tomorrow's prices are used for the "next 24h" view, so we include all points from the next day.
   const tomorrowsPrices = {
-    hourly: dataPointsHourly.filter(e => new Date(e.ts).getTime() >= endOfDay),
-    quarterly: dataPointsQuarterly.filter(e => new Date(e.ts).getTime() >= endOfDay)
+    hourly: dataPointsHourly.filter(e => new Date(e.ts).getTime() >= endOfDay && new Date(e.ts).getTime() < endOfDay + 24 * 60 * 60 * 1000),
+    quarterly: dataPointsQuarterly.filter(e => new Date(e.ts).getTime() >= endOfDay && new Date(e.ts).getTime() < endOfDay + 24 * 60 * 60 * 1000)
   };
+
 
   return { todaysPrices, tomorrowsPrices };
 };
