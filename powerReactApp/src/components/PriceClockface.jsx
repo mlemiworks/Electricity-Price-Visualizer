@@ -7,7 +7,7 @@ const CX = SIZE / 2;
 const CY = SIZE / 2;
 const INNER_R = 55;
 const OUTER_R = 180;
-const LABEL_R = 210;
+const LABEL_R = 190;
 const SELECTED_RED = '#e03a4a';
 
 function ang(i, segments) {
@@ -80,161 +80,180 @@ const PriceClockface = ({
 
   return (
     <div style={styles.frame}>
+      <style>{`
+        @media (max-width: 480px) {
+          .price-clockface-tabs {
+            flex-direction: column !important;
+          }
+          .price-clockface-tabs button {
+            border-right: none !important;
+            border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+          }
+          .price-clockface-tabs button:last-child {
+            border-bottom: none !important;
+          }
+        }
+      `}</style>
       <div style={styles.content}>
-      <div style={styles.header}>
-        <div style={styles.key}>snt/kWh · 24h bars</div>
-        <div style={styles.tabs}>
-          <button
-            onClick={() => setGran('hourly')}
-            style={{ ...styles.tab, ...(!isQ ? styles.tabOn : {}) }}
-          >
-            Tunneittain
-          </button>
-          <button
-            onClick={() => setGran('quarterly')}
-            style={{ ...styles.tab, ...(isQ ? styles.tabOn : {}) }}
-            disabled={quarters.length === 0}
-          >
-            Vartin tarkkuus
-          </button>
-        </div>
-      </div>
-
-      <svg
-        width={SIZE}
-        height={SIZE}
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}
-      >
-        {/* Guide rings */}
-        {guides.map((v) => {
-          const t = priceNorm(v, prices);
-          const R = INNER_R + t * (OUTER_R - INNER_R);
-          return (
-            <g key={v}>
-              <circle
-                cx={CX}
-                cy={CY}
-                r={R}
-                fill="none"
-                stroke="#4a5558"
-                strokeDasharray="3 4"
-                strokeWidth="1.5"
-              />
-              <text x={CX + 4} y={CY - R - 2} style={styles.guideText}>
-                {Number.isInteger(v) ? v : v.toFixed(1)}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* Bars */}
-        {data.map((p, i) => {
-          const isSel = isSelected && selected.idx === i;
-          const isNow = i === nowIdx && showNow;
-          const fill = isSel ? SELECTED_RED : priceColor(p, colorMode, prices);
-          const timeLabel = isQ
-            ? `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`
-            : `${String(i).padStart(2, '0')}:00`;
-          const ariaLabel = `${timeLabel}, ${typeof p === 'number' ? p.toFixed(2) : '–'} snt per kilowattitunti`;
-          return (
-            <path
-              key={i}
-              d={barPath(i, priceNorm(p, prices), segments)}
-              fill={fill}
-              opacity={isNow ? 1 : 0.92}
-              stroke={isNow ? '#fff' : 'none'}
-              strokeWidth="1.5"
-              role="button"
-              tabIndex={0}
-              aria-label={ariaLabel}
-              style={{ cursor: 'pointer', transition: 'fill 120ms' }}
-              onMouseEnter={() => handleEnter(i)}
-              onMouseLeave={handleLeave}
-            />
-          );
-        })}
-
-        {/* Hour labels on rim */}
-        {Array.from({ length: 24 }, (_, h) => {
-          const a = (h / 24) * Math.PI * 2 - Math.PI / 2;
-          const lx = CX + LABEL_R * Math.cos(a);
-          const ly = CY + LABEL_R * Math.sin(a);
-          const major = h % 3 === 0;
-          return (
-            <text
-              key={h}
-              x={lx}
-              y={ly}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              style={{
-                ...styles.hourText,
-                fontSize: major ? 14 : 11,
-                fill: major ? '#cfd5d7' : '#626a6d',
-              }}
+        <div style={styles.header}>
+          <div style={styles.key}>snt/kWh · 24h</div>
+          <div style={styles.tabs} className="price-clockface-tabs">
+            <button
+              onClick={() => setGran('hourly')}
+              style={{ ...styles.tab, ...(!isQ ? styles.tabOn : {}) }}
             >
-              {String(h).padStart(2, '0')}
-            </text>
-          );
-        })}
+              Tunneittain
+            </button>
+            <button
+              onClick={() => setGran('quarterly')}
+              style={{ ...styles.tab, ...(isQ ? styles.tabOn : {}) }}
+              disabled={quarters.length === 0}
+            >
+              Vartin tarkkuus
+            </button>
+          </div>
+        </div>
 
-        {/* Price labels — hourly only, on bars tall enough to hold text */}
-        {showLabels &&
-          !isQ &&
-          prices.map((p, h) => {
-            if (p < 1.5) return null;
+        <svg
+          width={SIZE}
+          height={SIZE}
+          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}
+        >
+          {/* Guide rings */}
+          {guides.map((v) => {
+            const t = priceNorm(v, prices);
+            const R = INNER_R + t * (OUTER_R - INNER_R);
+            return (
+              <g key={v}>
+                <circle
+                  cx={CX}
+                  cy={CY}
+                  r={R}
+                  fill="none"
+                  stroke="#4a5558"
+                  strokeDasharray="3 4"
+                  strokeWidth="1.5"
+                />
+                <text x={CX - 2} y={CY - R - 5} style={styles.guideText}>
+                  {Number.isInteger(v) ? v : v.toFixed(1)}
+                </text>
+                <text x={CX - 8} y={CY + R + 12} style={styles.guideText}>
+                  {Number.isInteger(v) ? v : v.toFixed(1)}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Bars */}
+          {data.map((p, i) => {
+            const isSel = isSelected && selected.idx === i;
+            const isNow = i === nowIdx && showNow;
+            const fill = isSel
+              ? SELECTED_RED
+              : priceColor(p, colorMode, prices);
+            const timeLabel = isQ
+              ? `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`
+              : `${String(i).padStart(2, '0')}:00`;
+            const ariaLabel = `${timeLabel}, ${typeof p === 'number' ? p.toFixed(2) : '–'} snt per kilowattitunti`;
+            return (
+              <path
+                key={i}
+                d={barPath(i, priceNorm(p, prices), segments)}
+                fill={fill}
+                opacity={isNow ? 1 : 0.92}
+                stroke={isNow ? '#fff' : 'none'}
+                strokeWidth="1.5"
+                role="button"
+                tabIndex={0}
+                aria-label={ariaLabel}
+                style={{ cursor: 'pointer', transition: 'fill 120ms' }}
+                onMouseEnter={() => handleEnter(i)}
+                onMouseLeave={handleLeave}
+              />
+            );
+          })}
+
+          {/* Hour labels on rim */}
+          {Array.from({ length: 24 }, (_, h) => {
             const a = (h / 24) * Math.PI * 2 - Math.PI / 2;
-            const t = priceNorm(p, prices);
-            const R = INNER_R + t * (OUTER_R - INNER_R) - 14;
-            const tx = CX + R * Math.cos(a);
-            const ty = CY + R * Math.sin(a);
+            const lx = CX + LABEL_R * Math.cos(a);
+            const ly = CY + LABEL_R * Math.sin(a);
+            const major = h % 3 === 0;
             return (
               <text
                 key={h}
-                x={tx}
-                y={ty}
+                x={lx}
+                y={ly}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                style={styles.priceText}
+                style={{
+                  ...styles.hourText,
+                  fontSize: major ? 14 : 11,
+                  fill: major ? '#cfd5d7' : '#626a6d',
+                }}
               >
-                {p.toFixed(p < 10 ? 1 : 0)}
+                {String(h).padStart(2, '0')}
               </text>
             );
           })}
 
-        {/* Center circle + readout */}
-        <circle
-          cx={CX}
-          cy={CY}
-          r={INNER_R - 3}
-          fill="#1a1d1e"
-          stroke={isSelected ? SELECTED_RED : '#2a2f30'}
-          strokeWidth={isSelected ? 1.5 : 1}
-        />
-        <text
-          x={CX}
-          y={CY - 6}
-          textAnchor="middle"
-          style={{
-            ...styles.centerLabel,
-            fill: isSelected ? SELECTED_RED : styles.centerLabel.fill,
-          }}
-        >
-          {displayLabel}
-        </text>
-        <text
-          x={CX}
-          y={CY + 18}
-          textAnchor="middle"
-          style={{
-            ...styles.centerValue,
-            fill: isSelected ? SELECTED_RED : styles.centerValue.fill,
-          }}
-        >
-          {typeof displayValue === 'number' ? displayValue.toFixed(2) : '–'}
-        </text>
-      </svg>
+          {/* Price labels — hourly only, on bars tall enough to hold text */}
+          {showLabels &&
+            !isQ &&
+            prices.map((p, h) => {
+              const price_pos = 14;
+              const a = (h / 24) * Math.PI * 2 - Math.PI / 2;
+              const t = priceNorm(p, prices);
+              const R = INNER_R + t * (OUTER_R - INNER_R) - 14;
+              const tx = CX + R * Math.cos(a);
+              const ty = CY + R * Math.sin(a);
+              return (
+                <text
+                  key={h}
+                  x={tx}
+                  y={ty}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  style={styles.priceText}
+                >
+                  {p.toFixed(0)}
+                </text>
+              );
+            })}
+
+          {/* Center circle + readout */}
+          <circle
+            cx={CX}
+            cy={CY}
+            r={INNER_R - 3}
+            fill="#1a1d1e"
+            stroke={isSelected ? SELECTED_RED : '#2a2f30'}
+            strokeWidth={isSelected ? 1.5 : 1}
+          />
+          <text
+            x={CX}
+            y={CY - 6}
+            textAnchor="middle"
+            style={{
+              ...styles.centerLabel,
+              fill: isSelected ? SELECTED_RED : styles.centerLabel.fill,
+            }}
+          >
+            {displayLabel}
+          </text>
+          <text
+            x={CX}
+            y={CY + 18}
+            textAnchor="middle"
+            style={{
+              ...styles.centerValue,
+              fill: isSelected ? SELECTED_RED : styles.centerValue.fill,
+            }}
+          >
+            {typeof displayValue === 'number' ? displayValue.toFixed(2) : '–'}
+          </text>
+        </svg>
       </div>
     </div>
   );
