@@ -18,7 +18,7 @@
     "express": "^5.2.1",
     "moment-timezone": "^0.6.2",
     "node-cache": "^5.1.2",
-    "node-cron": "^3.0.3",
+    "node-cron": "^4.5.0",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
